@@ -1,0 +1,33 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "clipmotion",
+  "homepage": "https://github.com/nerdboi008/clipmotion",
+  "items": [
+    {
+      "name": "utils",
+      "type": "registry:lib",
+      "description": "Utility functions including cn helper",
+      "files": [
+        {
+          "path": "registry/nextjs/lib/utils.ts",
+          "type": "registry:lib"
+        }
+      ],
+      "dependencies": ["clsx", "tailwind-merge"],
+      "registryDependencies": []
+    },
+    {
+      "name": "image-crossfade",
+      "type": "registry:component",
+      "description": "A smooth image crossfade animation component",
+      "files": [
+        {
+          "path": "registry/nextjs/ui/image-crossfade.tsx",
+          "type": "registry:component"
+        }
+      ],
+      "dependencies": ["next"],
+      "registryDependencies": ["utils"]
+    }
+  ]
+}

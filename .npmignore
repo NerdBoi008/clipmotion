@@ -1,0 +1,11 @@
+src/
+tests/
+node_modules/
+*.log
+.env
+.git
+.github
+tsdown.config.ts
+tsconfig.json
+.vscode
+.idea
