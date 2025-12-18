@@ -32,6 +32,7 @@ program
   .option("-s, --silent", "mute output")
   .option("--src-dir", "use src directory", false)
   .option("--css-variables", "use css variables", true)
+  .option("-l, --local", "use local registry (for development)", false)
   .action(addComponent);
 
 program

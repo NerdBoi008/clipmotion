@@ -52,7 +52,9 @@
     "prepublishOnly": "npm run build && npm run registry:build",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf build",
-    "test:install": "npm pack && npm install -g clipmotion-*.tgz"
+    "test:install": "npm pack && npm install -g clipmotion-*.tgz",
+    "dev:add": "npm run build && npm run registry:build && node build/index.cjs add --local",
+    "dev:test": "npm run build && npm run registry:build"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",

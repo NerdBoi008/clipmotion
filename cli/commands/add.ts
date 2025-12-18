@@ -19,6 +19,7 @@ interface AddOptions {
   silent?: boolean;
   srcDir?: boolean;
   cssVariables?: boolean;
+  local?: boolean;
 }
 
 interface InstallContext {
@@ -161,7 +162,14 @@ function ensureDirectory(filePath: string): void {
   }
 }
 
-function getRegistryUrl(config: ComponentConfig): string {
+function getRegistryUrl(config: ComponentConfig, local: boolean = false): string {
+  if (local) {
+    // Use local file system instead of GitHub
+    const localRegistryPath = join(process.cwd(), "public/r");
+    logDebug("Using local registry:", localRegistryPath);
+    return `file://${localRegistryPath}`;
+  }
+  
   return config.registry?.baseUrl || DEFAULT_REGISTRY_URL;
 }
 
@@ -305,8 +313,55 @@ async function mergeUtilsFile(
 async function fetchComponent(
   componentName: string,
   framework: Framework,
-  registryUrl: string
+  registryUrl: string,
+  local: boolean = false
 ): Promise<RegistryComponent> {
+
+  // -------------------------------
+  // LOCAL REGISTRY (filesystem)
+  // -------------------------------
+  if (local) {
+    // Absolute path to local registry
+    const localRegistryPath = join(
+      __dirname,
+      "..", // build
+      "public",
+      "r"
+    );
+
+    const componentPath = join(
+      localRegistryPath,
+      framework,
+      `${componentName}.json`
+    );
+
+    logDebug("Loading component from local registry:");
+    logDebug("  Path:", componentPath);
+
+    if (!existsSync(componentPath)) {
+      throw new Error(
+        `Component "${componentName}" not found locally for ${framework}\n` +
+        `  Expected: ${componentPath}`
+      );
+    }
+
+    try {
+      const content = readFileSync(componentPath, "utf-8");
+      const data = JSON.parse(content);
+      logDebug("  Loaded successfully from local registry");
+      return data as RegistryComponent;
+    } catch (error) {
+      throw new Error(
+        `Failed to read local component: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  // -------------------------------
+  // REMOTE REGISTRY (https)
+  // -------------------------------
   const url = `${registryUrl}/${framework}/${componentName}.json`;
 
   logDebug("Fetching component:");
@@ -329,7 +384,7 @@ async function fetchComponent(
     }
 
     const data = await res.json();
-    logDebug("  Fetched successfully");
+    logDebug("  Fetched successfully from remote registry");
 
     return data as RegistryComponent;
   } catch (error) {
@@ -358,14 +413,15 @@ async function installSingleComponent(
 
   installed.add(componentName);
 
-  spinner?.start(`Installing ${chalk.cyan(componentName)}...`);
+  spinner?.start(`Installing ${chalk.cyan(componentName)}...\n`);
 
   try {
     const registryUrl = getRegistryUrl(config);
     const component = await fetchComponent(
       componentName,
       framework,
-      registryUrl
+      registryUrl,
+      options.local
     );
 
     // Install registry dependencies first
@@ -380,7 +436,7 @@ async function installSingleComponent(
         }
       }
 
-      spinner?.start(`Installing ${chalk.cyan(componentName)}...`);
+      spinner?.start(`Installing ${chalk.cyan(componentName)}...\n`);
     }
 
     // Install npm dependencies
@@ -403,33 +459,23 @@ async function installSingleComponent(
 
     for (const file of component.files) {
       // // Construct proper target path
-      // let targetPath: string;
+      let targetPath: string;
 
-      // if (component.type === "registry:lib") {
-      //   // Utils go to the configured utils path
-      //   targetPath = join(
-      //     options.cwd ?? process.cwd(),
-      //     config.aliases.utils,
-      //     basename(file.name) // Just the filename (index.ts)
-      //   );
-      // } else {
-      //   // Components go to components path
-      //   targetPath = join(
-      //     options.cwd ?? process.cwd(),
-      //     componentBasePath,
-      //     file.name
-      //   );
-      // }
-
-      const basePath = component.type === "registry:lib" 
-        ? config.aliases.utils 
-        : componentBasePath;
-      
-      const targetPath = join(
-        options.cwd ?? process.cwd(),
-        basePath,
-        file.name
-      );
+      if (component.type === "registry:lib") {
+        // Utils go to the configured utils path
+        targetPath = join(
+          options.cwd ?? process.cwd(),
+          config.aliases.utils,
+          basename(file.name) // Just the filename (index.ts)
+        );
+      } else {
+        // Components go to components path
+        targetPath = join(
+          options.cwd ?? process.cwd(),
+          componentBasePath,
+          file.name
+        );
+      }
 
       // Special handling for utils files
       if (isUtilsFile(file.name)) {

@@ -136,7 +136,7 @@ function ensureDirectories(paths: Config["aliases"]): void {
     const fullPath = join(process.cwd(), path);
     if (!existsSync(fullPath)) {
       mkdirSync(fullPath, { recursive: true });
-      log.success(chalk.gray(`  Created directory: ${path}`));
+      log.success(chalk.gray(`Created directory: ${path}`));
     }
   });
 }
@@ -219,15 +219,23 @@ export async function init(): Promise<void> {
   // Build and save config
   const config = buildConfig(framework);
 
-  log.info(chalk.gray("\nConfiguration:"));
-  log.info(chalk.gray(`  Framework: ${framework}`));
-  log.info(chalk.gray(`  Components: ${config.aliases.components}`));
-  log.info(chalk.gray(`  Utils: ${config.aliases.utils}`));
-  log.info(chalk.yellow(`\n💡 Tip: Utils are inside components/ to avoid conflicts with existing lib/utils\n`));
+  log.info(
+    chalk.gray(
+      [
+        "Configuration:",
+        `  Framework: ${framework}`,
+        `  Components: ${config.aliases.components}`,
+        `  Utils: ${config.aliases.utils}`,
+      ].join("\n")
+    ) +
+      chalk.yellow(
+        `\n\n💡 Tip: Utils are inside components/ to avoid conflicts with existing lib/utils`
+      )
+  );
   
   try {
     writeFileSync(configPath, JSON.stringify(config, null, 2));
-    log.success(chalk.green("\nConfiguration saved"));
+    log.success(chalk.green("Configuration saved"));
   } catch (error) {
     log.error(chalk.red("Failed to save configuration"));
     throw error;
@@ -239,13 +247,13 @@ export async function init(): Promise<void> {
   // Install dependencies
   const deps = getFrameworkDeps(framework);
   if (deps.length > 0) {
-    log.step(chalk.blue("\nInstalling required dependencies..."));
+    log.step(chalk.blue("Installing required dependencies..."));
     await installDeps(deps);
   }
 
   // Success message
   outro(
-    chalk.green.bold("\n✨ Setup complete!") +
+    chalk.green.bold("✨ Setup complete!") +
       chalk.gray("\n\nNext steps:") +
       chalk.cyan("\n  clipmotion add <component-name>") +
       chalk.gray("\n  or") +
