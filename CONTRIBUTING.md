@@ -72,6 +72,19 @@ npm link
 clipmotion --help
 ```
 
+This installs:
+
+- CLI dependencies (commander, chalk, ora, etc.)
+- Component dependencies (next, react, vue, etc.) as **devDependencies**
+
+**Note:** These dev dependencies are NOT included in the published CLI package. They're only used for:
+
+- Type checking registry components
+- IDE autocomplete
+- Development experience
+
+When users run `clipmotion add`, dependencies are installed fresh in their project from the registry JSON metadata.
+
 ***
 
 ## 🧱 Adding a New Component (Recommended Flow)
@@ -94,7 +107,6 @@ When you run `clipmotion init`, it creates a config with paths optimized to avoi
 
 **Why utils inside components?**  
 Many projects already have `lib/utils` or `src/lib/utils` files. Placing ClipMotion utilities inside the components folder prevents accidental overwrites.
-
 
 ### 1. Use the `create` command
 

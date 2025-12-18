@@ -6,13 +6,25 @@ import { buildRegistry } from "./commands/registry-build.js";
 import { init } from "./commands/init.js";
 import { findComponent } from "./commands/find.js";
 import { createComponent } from "./commands/create.js";
+import { join } from "path";
+import { readFileSync } from "fs";
+
+function getVersion(): string {
+  try {
+    const pkgPath = join(__dirname, "..", "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    return pkg.version;
+  } catch {
+    return "0.1.0";
+  }
+}
 
 const program = new Command();
 
 program
   .name("clipmotion")
   .description("CLI to add animation components from video clips")
-  .version("1.0.0");
+  .version(getVersion());
 
 program
   .command("init")
@@ -49,7 +61,10 @@ program
   .command("create")
   .description("Create a new component for contribution (for contributors)")
   .argument("<component-name>", "name of the component (kebab-case)")
-  .option("-f, --framework <framework>", "framework (nextjs, react, vue, angular)")
+  .option(
+    "-f, --framework <framework>",
+    "framework (nextjs, react, vue, angular)"
+  )
   .option("-v, --video-url <url>", "source video URL")
   .option("-d, --description <desc>", "component description")
   .option("--category <category>", "component category")
