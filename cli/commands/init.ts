@@ -96,7 +96,7 @@ async function installDeps(deps: string[]): Promise<void> {
       cwd: process.cwd() 
     });
 
-    s.stop(chalk.green(`✓ Dependencies installed successfully`));
+    s.stop(chalk.green(`Dependencies installed successfully`));
   } catch (error) {
     s.stop(chalk.red(`✗ Failed to install dependencies`));
     log.error(chalk.red(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -198,7 +198,7 @@ export async function init(): Promise<void> {
 
   if (detectedFramework) {
     log.success(
-      chalk.green(`✓ Auto-detected framework: ${chalk.bold(detectedFramework)}`)
+      chalk.green(`Auto-detected framework: ${chalk.bold(detectedFramework)}`)
     );
     
     const useDetected = await confirm({
@@ -227,7 +227,7 @@ export async function init(): Promise<void> {
   
   try {
     writeFileSync(configPath, JSON.stringify(config, null, 2));
-    log.success(chalk.green("\n✓ Configuration saved"));
+    log.success(chalk.green("\nConfiguration saved"));
   } catch (error) {
     log.error(chalk.red("Failed to save configuration"));
     throw error;

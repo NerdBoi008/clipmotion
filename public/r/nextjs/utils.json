@@ -1,11 +1,11 @@
 {
   "name": "utils",
   "type": "registry:lib",
-  "description": "Utility functions for ClipMotion components",
+  "description": "utils lib for nextjs",
   "files": [
     {
-      "name": "utils.ts",
-      "content": "// registry/nextjs/lib/utils.ts\r\n/**\r\n * @description Utility functions for ClipMotion components\r\n * @category Utilities\r\n */\r\n\r\nimport { clsx, type ClassValue } from \"clsx\";\r\nimport { twMerge } from \"tailwind-merge\";\r\n\r\nexport function cn(...inputs: ClassValue[]) {\r\n  return twMerge(clsx(inputs));\r\n}\r\n"
+      "name": "utils/index.ts",
+      "content": "import { clsx, type ClassValue } from \"clsx\";\r\nimport { twMerge } from \"tailwind-merge\";\r\n\r\nexport function cn(...inputs: ClassValue[]) {\r\n  return twMerge(clsx(inputs));\r\n}\r\n"
     }
   ],
   "dependencies": [
@@ -16,7 +16,6 @@
   "devDependencies": [],
   "registryDependencies": [],
   "meta": {
-    "category": "Utilities",
     "source": "registry\\nextjs\\lib\\utils.ts"
   }
 }

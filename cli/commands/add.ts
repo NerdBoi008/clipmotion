@@ -95,11 +95,11 @@ function logError(message: string, error?: Error): void {
 
 function detectPackageManager(): PackageManager {
   const cwd = process.cwd();
-  
+
   if (existsSync(join(cwd, "bun.lockb"))) return "bun";
   if (existsSync(join(cwd, "pnpm-lock.yaml"))) return "pnpm";
   if (existsSync(join(cwd, "yarn.lock"))) return "yarn";
-  
+
   return "npm";
 }
 
@@ -120,9 +120,9 @@ async function installDependencies(
       bun: ["add", dev ? "--dev" : "", ...deps].filter(Boolean),
     };
 
-    await execa(pm, commands[pm], { 
+    await execa(pm, commands[pm], {
       stdio: DEBUG ? "inherit" : "pipe",
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
 
     logDebug("Dependencies installed successfully");
@@ -170,57 +170,62 @@ function getRegistryUrl(config: ComponentConfig): string {
 /* -------------------------------------------------------------------------- */
 
 function isUtilsFile(filename: string): boolean {
-  const normalizedPath = filename.toLowerCase().replace(/\\/g, '/');
-  
+  const normalizedPath = filename.toLowerCase().replace(/\\/g, "/");
+
   const utilsPatterns = [
-    /utils\.(ts|js|tsx|jsx)$/,
-    /utils\/index\.(ts|js|tsx|jsx)$/,
-    /\/utils\.(ts|js|tsx|jsx)$/,
-    /cn\.(ts|js)$/,
+    /^utils\.(ts|js|tsx|jsx)$/, // utils.ts
+    /^utils\/index\.(ts|js|tsx|jsx)$/, // utils/index.ts
+    /\/utils\/index\.(ts|js|tsx|jsx)$/, // some/path/utils/index.ts
+    /^cn\.(ts|js)$/, // cn.ts
+    /^cn\/index\.(ts|js)$/, // cn/index.ts
   ];
-  
-  return utilsPatterns.some(pattern => pattern.test(normalizedPath));
+
+  return utilsPatterns.some((pattern) => pattern.test(normalizedPath));
 }
 
 function extractFunctionNames(content: string): string[] {
   const functions = new Set<string>();
-  
+
   // Match function declarations
   const functionRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/g;
   let match;
   while ((match = functionRegex.exec(content)) !== null) {
     functions.add(match[1]!);
   }
-  
+
   // Match arrow functions and const declarations
-  const arrowRegex = /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\(|(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(/g;
+  const arrowRegex =
+    /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\(|(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(/g;
   while ((match = arrowRegex.exec(content)) !== null) {
     const name = match[1] || match[2];
     if (name) functions.add(name);
   }
-  
+
   return Array.from(functions);
 }
 
-function extractFunctionCode(content: string, functionName: string): string | null {
+function extractFunctionCode(
+  content: string,
+  functionName: string
+): string | null {
   // Try to match function declaration
   const functionPattern = new RegExp(
     `((?:export\\s+)?(?:async\\s+)?function\\s+${functionName}\\s*[^{]*\\{(?:[^{}]|\\{[^{}]*\\})*\\})`,
-    's'
+    "s"
   );
-  
+
   let match = content.match(functionPattern);
   if (match) return match[1]!;
-  
+
   // Try to match arrow function or const
   const arrowPattern = new RegExp(
     `((?:export\\s+)?(?:const|let|var)\\s+${functionName}\\s*[:=][^;]*(?:;|\\n))`,
-    's'
+    "s"
   );
-  
+
   match = content.match(arrowPattern);
   if (match) return match[1]!;
-  
+
   return null;
 }
 
@@ -256,7 +261,7 @@ async function mergeUtilsFile(
 
   // Find functions that need to be added
   const missingFunctions = newFunctions.filter(
-    fn => !existingFunctions.includes(fn)
+    (fn) => !existingFunctions.includes(fn)
   );
 
   if (missingFunctions.length === 0) {
@@ -281,11 +286,15 @@ async function mergeUtilsFile(
 
   // Merge: append missing functions
   const separator = "\n\n";
-  const mergedContent = existingContent.trimEnd() + separator + functionsToAdd.join(separator) + "\n";
-  
+  const mergedContent =
+    existingContent.trimEnd() +
+    separator +
+    functionsToAdd.join(separator) +
+    "\n";
+
   writeFileSync(targetPath, mergedContent, "utf-8");
   logDebug(`Merged ${functionsToAdd.length} new functions into:`, targetPath);
-  
+
   return "merged";
 }
 
@@ -321,7 +330,7 @@ async function fetchComponent(
 
     const data = await res.json();
     logDebug("  Fetched successfully");
-    
+
     return data as RegistryComponent;
   } catch (error) {
     if (error instanceof Error) {
@@ -353,7 +362,11 @@ async function installSingleComponent(
 
   try {
     const registryUrl = getRegistryUrl(config);
-    const component = await fetchComponent(componentName, framework, registryUrl);
+    const component = await fetchComponent(
+      componentName,
+      framework,
+      registryUrl
+    );
 
     // Install registry dependencies first
     if (component.registryDependencies?.length) {
@@ -389,22 +402,45 @@ async function installSingleComponent(
     let filesMerged = 0;
 
     for (const file of component.files) {
+      // // Construct proper target path
+      // let targetPath: string;
+
+      // if (component.type === "registry:lib") {
+      //   // Utils go to the configured utils path
+      //   targetPath = join(
+      //     options.cwd ?? process.cwd(),
+      //     config.aliases.utils,
+      //     basename(file.name) // Just the filename (index.ts)
+      //   );
+      // } else {
+      //   // Components go to components path
+      //   targetPath = join(
+      //     options.cwd ?? process.cwd(),
+      //     componentBasePath,
+      //     file.name
+      //   );
+      // }
+
+      const basePath = component.type === "registry:lib" 
+        ? config.aliases.utils 
+        : componentBasePath;
+      
       const targetPath = join(
         options.cwd ?? process.cwd(),
-        componentBasePath,
+        basePath,
         file.name
       );
 
       // Special handling for utils files
       if (isUtilsFile(file.name)) {
         spinner && (spinner.text = `Checking utils file...`);
-        
+
         const mergeResult = await mergeUtilsFile(
           targetPath,
           file.content,
           options.overwrite
         );
-        
+
         if (mergeResult === "merged") {
           filesMerged++;
           logDebug("Merged utils functions into:", targetPath);
@@ -415,8 +451,9 @@ async function installSingleComponent(
           filesWritten++;
           logDebug("Created new utils file:", targetPath);
         }
-        
-        spinner && (spinner.text = `Installing ${chalk.cyan(componentName)}...`);
+
+        spinner &&
+          (spinner.text = `Installing ${chalk.cyan(componentName)}...`);
         continue;
       }
 
@@ -434,8 +471,8 @@ async function installSingleComponent(
     }
 
     // Build status message
-    const statusParts = [chalk.green(`✓ ${componentName}`)];
-    
+    const statusParts = [chalk.green(`${componentName}`)];
+
     if (filesWritten > 0) {
       statusParts.push(chalk.gray(`(${filesWritten} new)`));
     }
@@ -452,11 +489,11 @@ async function installSingleComponent(
     return true;
   } catch (error) {
     spinner?.fail(chalk.red(`✗ Failed: ${componentName}`));
-    
+
     if (error instanceof Error) {
       console.error(chalk.red(`  ${error.message}`));
     }
-    
+
     return false;
   }
 }
@@ -535,13 +572,17 @@ export async function addComponent(
     console.log(); // Empty line
 
     if (results.failed === 0) {
-      console.log(chalk.green.bold("✨ All components installed successfully!"));
-      
+      console.log(
+        chalk.green.bold("✨ All components installed successfully!")
+      );
+
       if (context.installed.size > components.length) {
         console.log(
           chalk.gray(
             `  (including ${context.installed.size - components.length} ${
-              context.installed.size - components.length === 1 ? "dependency" : "dependencies"
+              context.installed.size - components.length === 1
+                ? "dependency"
+                : "dependencies"
             })`
           )
         );

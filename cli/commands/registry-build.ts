@@ -202,9 +202,34 @@ function createRegistryItem(
     const componentName = basename(file, extname(file));
     const fileContent = readFileSync(filePath, "utf-8");
 
-    // Extract metadata from comments (optional)
+    // Extract metadata from comments
     const descriptionMatch = fileContent.match(/@description\s+(.+)/);
     const categoryMatch = fileContent.match(/@category\s+(.+)/);
+
+    // Determine the target file structure based on type
+    let targetFileName = file;
+    
+    if (type === "registry:lib") {
+      // For lib files like utils.ts, organize into folders
+      // utils.ts → utils/index.ts
+      const ext = extname(file);
+      targetFileName = `${componentName}/index${ext}`;
+    } else if (type === "registry:hook") {
+      // hooks stay as-is: use-media-query.ts
+      targetFileName = file;
+    } else {
+      // Components stay as-is: blur-toggle.tsx
+      targetFileName = file;
+    }
+
+    const meta: { source: string; category?: string } = {
+      source: relative(process.cwd(), filePath),
+    };
+    
+    const category = categoryMatch?.[1]?.trim();
+    if (category) {
+      meta.category = category;
+    }
 
     return {
       name: componentName,
@@ -214,27 +239,21 @@ function createRegistryItem(
         `${componentName} ${type.split(":")[1]} for ${framework}`,
       files: [
         {
-          name: file,
+          name: targetFileName,
           content: fileContent,
         },
       ],
       dependencies: extractDependencies(fileContent, framework),
       devDependencies: extractDevDependencies(fileContent),
       registryDependencies: extractRegistryDependencies(fileContent),
-      ...(descriptionMatch?.[1]?.trim() || categoryMatch?.[1]?.trim()
-    ? {
-        meta: {
-          ...(categoryMatch?.[1]?.trim() && { category: categoryMatch[1].trim() }),
-          source: relative(process.cwd(), filePath),
-        },
-      }
-    : { meta: { source: relative(process.cwd(), filePath) } }),
+      meta,
     };
   } catch (error) {
     logError(`Failed to process ${file}`, error as Error);
     return null;
   }
 }
+
 
 function writeRegistryItem(
   item: RegistryItem,
