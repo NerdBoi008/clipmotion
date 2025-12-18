@@ -87,6 +87,25 @@ function logError(message: string, error?: Error): void {
   }
 }
 
+function transformImports(content: string, framework: string): string {
+  // Replace relative imports with path aliases for the generated code
+  let transformed = content;
+  
+  // Transform ../lib/utils to @/components/utils
+  transformed = transformed.replace(
+    /from\s+['"](\.\.\/lib\/utils)['"]/g,
+    'from "@/components/utils"'
+  );
+  
+  // Transform ../lib/* to @/components/*
+  transformed = transformed.replace(
+    /from\s+['"](\.\.\/lib\/([^'"]+))['"]/g,
+    'from "@/components/$2"'
+  );
+  
+  return transformed;
+}
+
 /* -------------------------------------------------------------------------- */
 /*                           DEPENDENCY EXTRACTION                            */
 /* -------------------------------------------------------------------------- */
@@ -202,9 +221,12 @@ function createRegistryItem(
     const componentName = basename(file, extname(file));
     const fileContent = readFileSync(filePath, "utf-8");
 
+    // ✅ Transform imports before storing
+    const transformedContent = transformImports(fileContent, framework);
+
     // Extract metadata from comments
-    const descriptionMatch = fileContent.match(/@description\s+(.+)/);
-    const categoryMatch = fileContent.match(/@category\s+(.+)/);
+    const descriptionMatch = transformedContent.match(/@description\s+(.+)/);
+    const categoryMatch = transformedContent.match(/@category\s+(.+)/);
 
     // Determine the target file structure based on type
     let targetFileName = file;
@@ -240,12 +262,12 @@ function createRegistryItem(
       files: [
         {
           name: targetFileName,
-          content: fileContent,
+          content: transformedContent,
         },
       ],
-      dependencies: extractDependencies(fileContent, framework),
-      devDependencies: extractDevDependencies(fileContent),
-      registryDependencies: extractRegistryDependencies(fileContent),
+      dependencies: extractDependencies(transformedContent, framework),
+      devDependencies: extractDevDependencies(transformedContent),
+      registryDependencies: extractRegistryDependencies(transformedContent),
       meta,
     };
   } catch (error) {
