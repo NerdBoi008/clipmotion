@@ -12,7 +12,8 @@
     "types": ["node"],
 
     "paths": {
-      "@/*": ["./*"]
+      "@/components/*": ["./components/*"],
+      "@/components/utils": ["./components/utils"]
     },
     // Other Outputs
     "sourceMap": true,

@@ -1,3 +1,9 @@
+// registry/nextjs/lib/utils.ts
+/**
+ * @description Utility functions for ClipMotion components
+ * @category Utilities
+ */
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

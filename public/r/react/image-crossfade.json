@@ -11,5 +11,11 @@
   "dependencies": [
     "react"
   ],
-  "registryDependencies": []
+  "devDependencies": [],
+  "registryDependencies": [
+    "utils"
+  ],
+  "meta": {
+    "source": "registry\\react\\ui\\image-crossfade.tsx"
+  }
 }

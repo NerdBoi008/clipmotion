@@ -1,10 +1,65 @@
-node_modules
-dist
-build
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Environment files
 .env
-.git
-.github
+.env.local
+.env.*.local
+*.env
 
-.vscode
-.idea
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Debug
+.vscode-test/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Lock files (keep one based on your preference)
+# Uncomment the ones you DON'T use:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Test projects / sandboxes
+test-project/
+sandbox/
+playground/
