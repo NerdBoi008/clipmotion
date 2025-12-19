@@ -1,87 +1,66 @@
 ---
-name: "🐞 Bug Report"
-description: "Report a bug in the ClipMotion CLI or components"
-title: "[Bug] <short description>"
-labels: ["bug"]
+name: "🎬 Animation Request"
+about: "Request a new animation component based on a video (Instagram, TikTok, YouTube, etc.)"
+title: "[Animation] <short animation name>"
+labels: ["animation-request", "enhancement"]
 assignees: []
 ---
 
-## 🐞 Bug Summary
+## 🎥 Source Video
 
-**Describe the bug:**
+**Link to the video:**
 
-A clear and concise description of what the bug is.
-
----
-
-## ✅ Expected Behavior
-
-**What should have happened?**
-
-Describe what you expected to happen instead.
+> Example: https://www.instagram.com/p/..., https://www.tiktok.com/@user/video/..., https://youtube.com/watch?v=...
 
 ---
 
-## 🧪 Actual Behavior
+## ✨ Animation Description
 
-**What actually happened?**
+**What does the animation do?**
 
-- Error messages
-- Wrong files generated
-- CLI crashes
-- Components not working as expected
+- Describe the effect in your own words.
+- Mention when it happens (on load, scroll, hover, click, etc.).
 
 ---
 
-## 🔁 Steps to Reproduce
+## 🧩 Where would you use it?
 
-Please provide steps if possible:
+**Context / use case:**
 
-1. Run `...`
-2. Use command: `clipmotion ...`
-3. Open file / page `...`
-4. See error / unexpected behavior
+- e.g. "Product image hover", "Hero section background", "Button interaction", etc.
 
 ---
 
-## 🖥 Environment
+## 🧱 Preferred Tech (Optional)
 
-- OS: (e.g. macOS 14, Windows 11, Ubuntu 22.04)
-- Node.js version: `node -v`
-- Package manager: `npm` / `pnpm` / `yarn` / `bun`
-- ClipMotion version: `clipmotion --version`
-- Framework: Next.js / React / Vue / Angular (and version if possible)
+**Framework(s):**
 
----
+- [ ] Next.js  
+- [ ] React  
+- [ ] Vue  
+- [ ] Angular  
+- [ ] No preference  
 
-## 📂 Project / Config Details
+**Libraries (optional):**
 
-- `clipmotion-components.json` (redact any sensitive paths if needed)
-- Any custom `path` / `aliases` options used
-- Relevant config files (e.g. `next.config.*`, `vite.config.*`) if relevant
-
----
-
-## 📸 Screenshots / Logs
-
-If applicable, add:
-
-- Screenshots
-- Terminal logs
-- Stack traces
-
-Use fenced code blocks for logs:
-
-```text
-<your logs here>
-```
+- [ ] Framer Motion  
+- [ ] GSAP  
+- [ ] WebGL / Three.js  
+- [ ] CSS-only  
+- [ ] No preference  
 
 ---
 
-## 🔍 Additional Context
+## 🎚 Difficulty Guess (Optional)
 
-Anything else that might help reproduce or understand the issue.
+How complex do you think this animation is?
 
-```text
-<your additional context here>
-```
+- [ ] Easy (basic CSS / transforms)  
+- [ ] Medium (timeline / chained animations)  
+- [ ] Hard (3D / particles / WebGL)  
+
+---
+
+## 📝 Extra Notes (Optional)
+
+Add any extra details, timestamps from the video, or references here.
