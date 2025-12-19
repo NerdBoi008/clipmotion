@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { cn } from "@/components/utils";
+import { cn } from "../lib/utils";
 
 const ToggleImg = ({
   from,
