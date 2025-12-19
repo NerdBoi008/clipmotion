@@ -8,12 +8,15 @@ export type PackageManager = "npm" | "yarn" | "pnpm" | "bun";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
-export type ComponentType = "registry:component" | "registry:lib" | "registry:hook";
+export type ComponentType =
+  | "registry:component"
+  | "registry:lib"
+  | "registry:hook";
 
 export interface ContributorInfo {
   name?: string;
   github?: string;
-  x?: string;         // formerly twitter
+  x?: string; // formerly twitter
   website?: string;
 }
 
@@ -131,6 +134,10 @@ export interface CreateOptions {
   description?: string;
   category?: string;
   difficulty?: Difficulty;
+  author?: string;
+  github?: string;
+  x?: string;
+  website?: string;
   debug?: boolean;
 }
 

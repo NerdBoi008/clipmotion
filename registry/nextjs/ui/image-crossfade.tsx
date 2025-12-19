@@ -1,16 +1,17 @@
 /**
  * @description Smooth image crossfade effect on click
  * @category Click Interactions
- * @source https://www.instagram.com/moin_m.a.l.e.k/
+ * @source https://www.instagram.com/p/DRPOaKMiItG/
  * @author NerdBoi008
  * @github https://github.com/nerdboi008
  * @x https://x.com/moin_malek_
+ * @website https://www.nerdboi.online
  */
 
 import Image from "next/image";
 import { cn } from "../lib/utils";
 
-const ToggleImg = ({
+const ImageCrossfade = ({
   from,
   to,
   isDark,
@@ -48,4 +49,4 @@ const ToggleImg = ({
   );
 };
 
-export default ToggleImg;
+export default ImageCrossfade;

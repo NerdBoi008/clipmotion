@@ -74,6 +74,10 @@ program
   .option("-d, --description <desc>", "component description")
   .option("--category <category>", "component category")
   .option("--difficulty <level>", "difficulty level (easy, medium, hard)")
+  .option("--author <name>", "your display name for credits")
+  .option("--github <url>", "your GitHub profile URL")
+  .option("--x <url>", "your X (Twitter) profile URL")
+  .option("--website <url>", "your personal website URL")
   .option("--debug", "enable debug logs")
   .action(createComponent);
 

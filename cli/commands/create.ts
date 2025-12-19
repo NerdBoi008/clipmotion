@@ -61,9 +61,26 @@ function getComponentTemplate(
   framework: Framework,
   description: string,
   category: string,
-  videoUrl?: string
+  videoUrl: string | undefined,
+  author: string,
+  github?: string,
+  x?: string,
+  website?: string
 ): string {
   const pascalName = toPascalCase(componentName);
+
+  const creditsLines: string[] = [
+    ` * @description ${description}`,
+    ` * @category ${category}`,
+  ];
+
+  if (videoUrl) creditsLines.push(` * @source ${videoUrl}`);
+  if (author) creditsLines.push(` * @author ${author}`);
+  if (github) creditsLines.push(` * @github ${github}`);
+  if (x) creditsLines.push(` * @x ${x}`);
+  if (website) creditsLines.push(` * @website ${website}`);
+
+  const jsdocBlock = ["/**", ...creditsLines, " */", ""].join("\n");
 
   const templates: Record<Framework, string> = {
     nextjs: `"use client";
@@ -72,12 +89,7 @@ import React from "react";
 // If you need utils like cn():
 // import { cn } from "@/components/utils";
 
-/**
- * @description ${description}
- * @category ${category}
- * ${videoUrl ? `@source ${videoUrl}` : ""}
- */
-
+${jsdocBlock}
 interface ${pascalName}Props {
   className?: string;
 }
@@ -94,12 +106,7 @@ export function ${pascalName}({ className }: ${pascalName}Props) {
 
     react: `import React from "react";
 
-/**
- * @description ${description}
- * @category ${category}
- * ${videoUrl ? `@source ${videoUrl}` : ""}
- */
-
+${jsdocBlock}
 interface ${pascalName}Props {
   className?: string;
 }
@@ -115,12 +122,7 @@ export function ${pascalName}({ className }: ${pascalName}Props) {
 `,
 
     vue: `<script setup lang="ts">
-/**
- * @description ${description}
- * @category ${category}
- * ${videoUrl ? `@source ${videoUrl}` : ""}
- */
-
+${jsdocBlock}
 interface Props {
   class?: string;
 }
@@ -142,12 +144,7 @@ defineProps<Props>();
 
     angular: `import { Component, Input } from '@angular/core';
 
-/**
- * @description ${description}
- * @category ${category}
- * ${videoUrl ? `@source ${videoUrl}` : ""}
- */
-
+${jsdocBlock}
 @Component({
   selector: 'app-${componentName}',
   template: \`
@@ -391,12 +388,75 @@ async function promptForDetails(
       initialValue: "medium",
     })) as Difficulty);
 
+  const author =
+    options.author ||
+    ((await text({
+      message: "Your name (for credits):",
+      placeholder: "e.g., NerdBoi008",
+      validate: (value) =>
+        value && value.length > 1
+          ? undefined
+          : "Please enter your display name",
+    })) as string);
+
+  const github =
+    options.github ||
+    ((await text({
+      message: "GitHub profile URL (optional):",
+      placeholder: "https://github.com/yourusername",
+      validate: (value) => {
+        if (!value) return undefined;
+        try {
+          new URL(value);
+          return undefined;
+        } catch {
+          return "Please enter a valid URL or leave blank";
+        }
+      },
+    })) as string);
+
+  const x =
+    options.x ||
+    ((await text({
+      message: "X / Twitter profile URL (optional):",
+      placeholder: "https://x.com/yourhandle",
+      validate: (value) => {
+        if (!value) return undefined;
+        try {
+          new URL(value);
+          return undefined;
+        } catch {
+          return "Please enter a valid URL or leave blank";
+        }
+      },
+    })) as string);
+
+  const website =
+    options.website ||
+    ((await text({
+      message: "Personal website (optional):",
+      placeholder: "https://your-site.com",
+      validate: (value) => {
+        if (!value) return undefined;
+        try {
+          new URL(value);
+          return undefined;
+        } catch {
+          return "Please enter a valid URL or leave blank";
+        }
+      },
+    })) as string);
+
   return {
     framework,
     videoUrl,
     description,
     category,
     difficulty,
+    author,
+    github,
+    x,
+    website,
   };
 }
 
@@ -404,7 +464,17 @@ function createComponentFiles(
   componentName: string,
   details: Required<Omit<CreateOptions, "debug">>
 ): void {
-  const { framework, videoUrl, description, category, difficulty } = details;
+  const {
+    framework,
+    videoUrl,
+    description,
+    category,
+    difficulty,
+    author,
+    github,
+    x,
+    website,
+  } = details;
 
   const registryDir = join(process.cwd(), "registry");
   const frameworkDir = join(registryDir, framework);
@@ -429,7 +499,11 @@ function createComponentFiles(
     framework,
     description,
     category,
-    videoUrl
+    videoUrl,
+    author,
+    github,
+    x,
+    website
   );
   writeFileSync(componentPath, componentContent, "utf-8");
 

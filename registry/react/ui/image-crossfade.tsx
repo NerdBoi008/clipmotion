@@ -27,7 +27,7 @@ export interface ToggleImgProps {
   onTransitionEnd?: () => void;
 }
 
-const ToggleImg: React.FC<ToggleImgProps> = ({
+const ImageCrossfade: React.FC<ToggleImgProps> = ({
   from,
   to,
   isDark,
@@ -132,7 +132,7 @@ const ToggleImg: React.FC<ToggleImgProps> = ({
   );
 };
 
-export default ToggleImg;
+export default ImageCrossfade;
 
 // Add this to your global CSS for smoother animations:
 
