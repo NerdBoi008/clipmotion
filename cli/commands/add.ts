@@ -3,70 +3,15 @@ import { execa } from "execa";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import ora, { type Ora } from "ora";
 import { join, dirname, basename, extname } from "path";
-import type { Framework } from "./init.js";
-
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
-interface AddOptions {
-  yes?: boolean;
-  debug?: boolean;
-  overwrite?: boolean;
-  cwd?: string;
-  all?: boolean;
-  path?: string;
-  silent?: boolean;
-  srcDir?: boolean;
-  cssVariables?: boolean;
-  local?: boolean;
-}
-
-interface InstallContext {
-  installed: Set<string>;
-  config: ComponentConfig;
-  framework: Framework;
-  options: AddOptions;
-  spinner: Ora | null;
-}
-
-interface ComponentConfig {
-  $schema?: string;
-  style?: string;
-  framework: Framework;
-  aliases: {
-    components: string;
-    utils: string;
-  };
-  registry?: {
-    baseUrl?: string;
-  };
-  tailwind?: {
-    config: string;
-    css: string;
-    baseColor: string;
-    cssVariables: boolean;
-  };
-}
-
-interface RegistryComponent {
-  name: string;
-  type: string;
-  files: Array<{
-    name: string;
-    content: string;
-  }>;
-  dependencies?: string[];
-  devDependencies?: string[];
-  registryDependencies?: string[];
-  meta?: {
-    description?: string;
-    source?: string;
-  };
-}
-
-type PackageManager = "npm" | "yarn" | "pnpm" | "bun";
-type MergeResult = "created" | "merged" | "skipped";
+import type {
+  Framework,
+  AddOptions,
+  InstallContext,
+  ComponentConfig,
+  RegistryComponent,
+  PackageManager,
+  MergeResult,
+} from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONSTANTS                                  */
@@ -162,15 +107,91 @@ function ensureDirectory(filePath: string): void {
   }
 }
 
-function getRegistryUrl(config: ComponentConfig, local: boolean = false): string {
+function getRegistryUrl(
+  config: ComponentConfig,
+  local: boolean = false
+): string {
   if (local) {
     // Use local file system instead of GitHub
     const localRegistryPath = join(process.cwd(), "public/r");
     logDebug("Using local registry:", localRegistryPath);
     return `file://${localRegistryPath}`;
   }
-  
+
   return config.registry?.baseUrl || DEFAULT_REGISTRY_URL;
+}
+
+function displayContributorCredit(component: RegistryComponent): void {
+  const c = component.meta?.contributor;
+  if (!c) return;
+
+  const name = c.name || "Anonymous";
+  const links: string[] = [];
+
+  if (c.github) links.push(`GitHub: ${c.github}`);
+  if (c.x) links.push(`Twitter: ${c.x}`);
+  if (c.website) links.push(`Web: ${c.website}`);
+
+  console.log(
+    chalk.gray(
+      "\n  ───────────────────────── Credits ─────────────────────────"
+    )
+  );
+
+  console.log(
+    "  " + chalk.bgGray.black("  Contributor  ") + " " + chalk.bold.cyan(name)
+  );
+
+  if (links.length) {
+    console.log(
+      "  " +
+        chalk.gray("\n  Links:") +
+        "  " +
+        links.map((l) => chalk.blue(`\n   ${l}`))
+      // links.map((l) => chalk.blue(l)).join(chalk.gray("  •  "))
+    );
+  }
+
+  console.log(
+    chalk.gray("  ──────────────────────────────────────────────────────────\n")
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          FRAMEWORK DETECTION                               */
+/* -------------------------------------------------------------------------- */
+
+function validateFramework(framework: string): framework is Framework {
+  const validFrameworks: Framework[] = ["nextjs", "react", "vue", "angular"];
+  return validFrameworks.includes(framework as Framework);
+}
+
+async function getAvailableFrameworks(
+  componentName: string,
+  registryUrl: string
+): Promise<Framework[]> {
+  const frameworks: Framework[] = ["nextjs", "react", "vue", "angular"];
+  const available: Framework[] = [];
+
+  for (const fw of frameworks) {
+    try {
+      const url = `${registryUrl}/${fw}/${componentName}.json`;
+      const res = await fetch(url, { method: "HEAD" });
+
+      if (res.ok) {
+        available.push(fw);
+      } else {
+        logDebug(`Component not available for ${fw}: HTTP ${res.status}`);
+      }
+    } catch (error) {
+      logDebug(
+        `Failed to check ${fw} for ${componentName}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
+  return available;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -316,7 +337,6 @@ async function fetchComponent(
   registryUrl: string,
   local: boolean = false
 ): Promise<RegistryComponent> {
-
   // -------------------------------
   // LOCAL REGISTRY (filesystem)
   // -------------------------------
@@ -341,7 +361,7 @@ async function fetchComponent(
     if (!existsSync(componentPath)) {
       throw new Error(
         `Component "${componentName}" not found locally for ${framework}\n` +
-        `  Expected: ${componentPath}`
+          `  Expected: ${componentPath}`
       );
     }
 
@@ -532,11 +552,24 @@ async function installSingleComponent(
     const statusMsg = statusParts.join(" ");
 
     spinner?.succeed(statusMsg);
+
+    // Show contributor credit after successful install
+    if (!options.silent && component.meta?.contributor) {
+      displayContributorCredit(component);
+    }
+
     return true;
   } catch (error) {
     spinner?.fail(chalk.red(`✗ Failed: ${componentName}`));
 
     if (error instanceof Error) {
+      // Check if it's a 404 (component not found)
+      if (error.message.includes("not found")) {
+        logDebug(`Component not found for ${framework}`);
+        // Return false to trigger suggestions later
+        return false;
+      }
+
       console.error(chalk.red(`  ${error.message}`));
     }
 
@@ -582,6 +615,37 @@ export async function addComponent(
   logDebug("Loading configuration from:", cwd);
   const config = loadConfig(cwd);
 
+  // Determine framework to use
+  let targetFramework = config.framework;
+
+  if (options.framework) {
+    if (!validateFramework(options.framework)) {
+      console.error(chalk.red(`\n✗ Invalid framework: ${options.framework}`));
+      console.log(chalk.gray("  Valid options: nextjs, react, vue, angular\n"));
+      process.exit(1);
+    }
+
+    targetFramework = options.framework as Framework;
+
+    if (!options.silent) {
+      console.log(
+        chalk.blue(
+          `\n🎬 Installing for ${chalk.bold(
+            targetFramework
+          )} (overriding config)\n`
+        )
+      );
+    }
+  } else if (!options.silent) {
+    console.log(
+      chalk.blue(
+        `\n🎬 Installing ${components.length} component${
+          components.length > 1 ? "s" : ""
+        } for ${chalk.bold(targetFramework)}...\n`
+      )
+    );
+  }
+
   logDebug("Configuration loaded:");
   logDebug("  Framework:", config.framework);
   logDebug("  Components path:", config.aliases.components);
@@ -592,7 +656,7 @@ export async function addComponent(
   const context: InstallContext = {
     installed: new Set<string>(),
     config,
-    framework: config.framework,
+    framework: targetFramework,
     options,
     spinner,
   };
@@ -602,7 +666,10 @@ export async function addComponent(
     success: 0,
     failed: 0,
     skipped: 0,
+    notFound: [] as string[],
   };
+
+  const registryUrl = getRegistryUrl(config, options.local);
 
   for (const componentName of components) {
     const success = await installSingleComponent(componentName, context);
@@ -610,6 +677,7 @@ export async function addComponent(
       results.success++;
     } else {
       results.failed++;
+      results.notFound.push(componentName);
     }
   }
 
@@ -644,6 +712,51 @@ export async function addComponent(
       console.log(
         chalk.gray(`  ${results.success} succeeded, ${results.failed} failed`)
       );
+    }
+
+    // ✅ Suggest alternative frameworks for failed components
+    if (results.notFound.length > 0) {
+      console.log(chalk.yellow("\n💡 Suggestions:\n"));
+
+      for (const componentName of results.notFound) {
+        const available = await getAvailableFrameworks(
+          componentName,
+          registryUrl
+        );
+
+        if (available.length > 0) {
+          console.log(
+            chalk.gray(
+              `  "${componentName}" is not available for ${chalk.bold(
+                targetFramework
+              )}`
+            )
+          );
+          console.log(
+            chalk.gray(
+              `  But it's available for: ${available
+                .map((fw) => chalk.cyan(fw))
+                .join(", ")}`
+            )
+          );
+          console.log(
+            chalk.green(
+              `  Try: clipmotion add ${componentName} --framework=${available[0]}\n`
+            )
+          );
+        } else {
+          console.log(
+            chalk.gray(
+              `  "${componentName}" is not available in any framework yet`
+            )
+          );
+          console.log(
+            chalk.gray(
+              `  Request it: https://github.com/nerdboi008/clipmotion/issues/new?template=animation-request.md\n`
+            )
+          );
+        }
+      }
     }
 
     console.log(); // Empty line

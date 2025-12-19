@@ -74,5 +74,9 @@
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.5.0",
     "vue": "^3.4.0"
+  },
+  "exports": {
+    "./types": "./build/types.d.cts",
+    ".": "./build/index.cjs"
   }
 }

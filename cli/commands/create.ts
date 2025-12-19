@@ -2,23 +2,8 @@ import chalk from "chalk";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import ora from "ora";
-import { text, select, confirm, multiselect } from "@clack/prompts";
-import type { Framework } from "./init.js";
-
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
-interface CreateOptions {
-  framework?: Framework;
-  videoUrl?: string;
-  description?: string;
-  category?: string;
-  difficulty?: "easy" | "medium" | "hard";
-  debug?: boolean;
-}
-
-type Difficulty = "easy" | "medium" | "hard";
+import { text, select, confirm } from "@clack/prompts";
+import type { Framework, CreateOptions, Difficulty } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONSTANTS                                  */
@@ -546,12 +531,9 @@ export async function createComponent(
         chalk.cyan(`npm run dev -- registry/${details.framework}/examples`)
     );
     console.log(
-      chalk.gray("  3. Build registry: ") +
-        chalk.cyan("npm run registry:build")
+      chalk.gray("  3. Build registry: ") + chalk.cyan("npm run registry:build")
     );
-    console.log(
-      chalk.gray("  4. Create PR with your changes\n")
-    );
+    console.log(chalk.gray("  4. Create PR with your changes\n"));
 
     console.log(chalk.blue(`🎥 Source video: ${details.videoUrl}\n`));
   } catch (error) {

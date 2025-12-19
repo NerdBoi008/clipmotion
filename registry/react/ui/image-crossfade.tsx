@@ -1,3 +1,12 @@
+/**
+ * @description Smooth image crossfade effect on click
+ * @category Click Interactions
+ * @source https://www.instagram.com/moin_m.a.l.e.k/
+ * @author NerdBoi008
+ * @github https://github.com/nerdboi008
+ * @x https://x.com/moin_malek_
+ */
+
 import React, { useRef, useEffect } from "react";
 import { cn } from "../lib/utils";
 
@@ -46,7 +55,7 @@ const ToggleImg: React.FC<ToggleImgProps> = ({
 
     if (prevIsDarkRef.current !== isDark) {
       onTransitionStart?.();
-      
+
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
@@ -124,7 +133,6 @@ const ToggleImg: React.FC<ToggleImgProps> = ({
 };
 
 export default ToggleImg;
-
 
 // Add this to your global CSS for smoother animations:
 

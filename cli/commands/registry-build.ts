@@ -9,36 +9,12 @@ import {
 import { join, basename, extname, relative } from "path";
 import chalk from "chalk";
 import ora, { type Ora } from "ora";
-
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
-interface RegistryItem {
-  name: string;
-  type: string;
-  description?: string;
-  files: Array<{
-    name: string;
-    content: string;
-  }>;
-  dependencies: string[];
-  devDependencies?: string[];
-  registryDependencies: string[];
-  meta?: {
-    source?: string;
-    category?: string;
-  };
-}
-
-interface BuildStats {
-  components: number;
-  utilities: number;
-  frameworks: number;
-  errors: number;
-}
-
-type ComponentType = "registry:component" | "registry:lib" | "registry:hook";
+import type {
+  ContributorInfo,
+  RegistryItem,
+  BuildStats,
+  ComponentType,
+} from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONSTANTS                                  */
@@ -76,7 +52,7 @@ function getComponentType(dirName: string): ComponentType {
     lib: "registry:lib",
     hooks: "registry:hook",
   };
-  
+
   return typeMap[dirName] || "registry:component";
 }
 
@@ -87,22 +63,40 @@ function logError(message: string, error?: Error): void {
   }
 }
 
+function extractContributorInfo(content: string): ContributorInfo | undefined {
+  const authorMatch = content.match(/@author\s+(.+)/);
+  const githubMatch = content.match(/@github\s+(https?:\/\/[^\s]+)/);
+  const xMatch = content.match(/@x\s+(https?:\/\/[^\s]+)/);
+  const websiteMatch = content.match(/@website\s+(https?:\/\/[^\s]+)/);
+
+  if (!authorMatch && !githubMatch && !xMatch && !websiteMatch) {
+    return undefined;
+  }
+
+  return {
+    name: authorMatch?.[1]?.trim()!,
+    github: githubMatch?.[1]?.trim()!,
+    x: xMatch?.[1]?.trim()!,
+    website: websiteMatch?.[1]?.trim()!,
+  };
+}
+
 function transformImports(content: string, framework: string): string {
   // Replace relative imports with path aliases for the generated code
   let transformed = content;
-  
+
   // Transform ../lib/utils to @/components/utils
   transformed = transformed.replace(
     /from\s+['"](\.\.\/lib\/utils)['"]/g,
     'from "@/components/utils"'
   );
-  
+
   // Transform ../lib/* to @/components/*
   transformed = transformed.replace(
     /from\s+['"](\.\.\/lib\/([^'"]+))['"]/g,
     'from "@/components/$2"'
   );
-  
+
   return transformed;
 }
 
@@ -112,7 +106,7 @@ function transformImports(content: string, framework: string): string {
 
 function extractDependencies(content: string, framework: string): string[] {
   const dependencies = new Set<string>();
-  
+
   // Add framework base dependency
   const baseDep = FRAMEWORK_DEPENDENCIES[framework];
   if (baseDep) {
@@ -121,16 +115,16 @@ function extractDependencies(content: string, framework: string): string[] {
 
   // Extract imports
   const importPatterns = [
-    /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,           // ES6 imports
-    /require\s*\(['"]([^'"]+)['"]\)/g,                    // CommonJS
-    /import\s*\(['"]([^'"]+)['"]\)/g,                     // Dynamic imports
+    /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g, // ES6 imports
+    /require\s*\(['"]([^'"]+)['"]\)/g, // CommonJS
+    /import\s*\(['"]([^'"]+)['"]\)/g, // Dynamic imports
   ];
 
   for (const pattern of importPatterns) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
       const importPath = match[1];
-      
+
       // Skip relative imports and path aliases
       if (importPath?.startsWith(".") || importPath?.startsWith("@/")) {
         continue;
@@ -154,16 +148,13 @@ function extractDevDependencies(content: string): string[] {
   const devDeps = new Set<string>();
 
   // Common dev-only imports
-  const devPatterns = [
-    /@testing-library/,
-    /vitest/,
-    /jest/,
-    /@types\//,
-  ];
+  const devPatterns = [/@testing-library/, /vitest/, /jest/, /@types\//];
 
   for (const pattern of devPatterns) {
     if (pattern.test(content)) {
-      const match = content.match(new RegExp(`from ['"]([^'"]*${pattern.source}[^'"]*)['"]`));
+      const match = content.match(
+        new RegExp(`from ['"]([^'"]*${pattern.source}[^'"]*)['"]`)
+      );
       if (match) {
         const pkg = match[1]?.startsWith("@")
           ? match[1].split("/").slice(0, 2).join("/")
@@ -198,14 +189,14 @@ function extractRegistryDependencies(content: string): string[] {
   const utilImportRegex = /from ["']@\/components\/([^"'\/]+)["']/g;
   let match;
   while ((match = utilImportRegex.exec(content)) !== null) {
-    if (match[1] !== 'utils') { // Don't add 'utils' as a component
+    if (match[1] !== "utils") {
+      // Don't add 'utils' as a component
       deps.add(match[1]!);
     }
   }
 
   return Array.from(deps).sort();
 }
-
 
 /* -------------------------------------------------------------------------- */
 /*                              FILE PROCESSING                               */
@@ -227,10 +218,12 @@ function createRegistryItem(
     // Extract metadata from comments
     const descriptionMatch = transformedContent.match(/@description\s+(.+)/);
     const categoryMatch = transformedContent.match(/@category\s+(.+)/);
+    const sourceMatch = fileContent.match(/@source\s+(https?:\/\/[^\s]+)/);
+    const contributor = extractContributorInfo(fileContent); // ✅ Extract contributor
 
     // Determine the target file structure based on type
     let targetFileName = file;
-    
+
     if (type === "registry:lib") {
       // For lib files like utils.ts, organize into folders
       // utils.ts → utils/index.ts
@@ -244,13 +237,21 @@ function createRegistryItem(
       targetFileName = file;
     }
 
-    const meta: { source: string; category?: string } = {
-      source: relative(process.cwd(), filePath),
+    const meta: {
+      source: string;
+      category?: string;
+      contributor?: ContributorInfo;
+    } = {
+      source: sourceMatch?.[1]?.trim() || relative(process.cwd(), filePath),
     };
-    
+
     const category = categoryMatch?.[1]?.trim();
     if (category) {
       meta.category = category;
+    }
+
+    if (contributor) {
+      meta.contributor = contributor; // ✅ Add to meta
     }
 
     return {
@@ -276,11 +277,7 @@ function createRegistryItem(
   }
 }
 
-
-function writeRegistryItem(
-  item: RegistryItem,
-  outputPath: string
-): boolean {
+function writeRegistryItem(item: RegistryItem, outputPath: string): boolean {
   try {
     ensureDirectory(basename(outputPath));
     writeFileSync(outputPath, JSON.stringify(item, null, 2), "utf-8");
@@ -426,7 +423,7 @@ export async function buildRegistry(): Promise<void> {
 
       const fullPath = join(registryDir, dir);
       const stat = statSync(fullPath);
-      
+
       return (
         stat.isDirectory() &&
         (existsSync(join(fullPath, "ui")) ||
@@ -437,7 +434,9 @@ export async function buildRegistry(): Promise<void> {
 
     if (frameworks.length === 0) {
       spinner.fail(chalk.red("No valid framework directories found"));
-      console.log(chalk.yellow("  Expected structure: registry/<framework>/ui/"));
+      console.log(
+        chalk.yellow("  Expected structure: registry/<framework>/ui/")
+      );
       process.exit(1);
     }
 
@@ -487,18 +486,19 @@ export async function buildRegistry(): Promise<void> {
 
     // Show results
     spinner.succeed(chalk.green.bold("✨ Registry built successfully!"));
-    
+
     console.log(chalk.gray("\n  Summary:"));
     console.log(chalk.cyan(`    Components: ${stats.components}`));
     console.log(chalk.cyan(`    Utilities: ${stats.utilities}`));
     console.log(chalk.cyan(`    Frameworks: ${stats.frameworks}`));
-    
+
     if (stats.errors > 0) {
       console.log(chalk.yellow(`    Errors: ${stats.errors}`));
     }
-    
-    console.log(chalk.gray(`\n  Output: ${relative(process.cwd(), outputDir)}\n`));
 
+    console.log(
+      chalk.gray(`\n  Output: ${relative(process.cwd(), outputDir)}\n`)
+    );
   } catch (error) {
     spinner.fail(chalk.red("Failed to build registry"));
     logError("Build error", error as Error);

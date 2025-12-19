@@ -108,6 +108,24 @@ When you run `clipmotion init`, it creates a config with paths optimized to avoi
 **Why utils inside components?**  
 Many projects already have `lib/utils` or `src/lib/utils` files. Placing ClipMotion utilities inside the components folder prevents accidental overwrites.
 
+### 🧩 Framework Support
+
+When creating components:
+
+1. **Start with one framework** (usually Next.js or React)
+2. **Add others gradually** as needed
+3. **Use the framework flag** to test:
+
+```bash
+# Test Next.js version
+clipmotion add your-component --framework=nextjs --local
+
+# Test React version
+clipmotion add your-component --framework=react --local
+```
+
+Components don't need to be available for all frameworks - users can override!
+
 ### 1. Use the `create` command
 
 ```bash
@@ -132,6 +150,35 @@ registry/<framework>/
 ├── examples/<component-name>.tsx   # Example usage
 └── <component-name>.README.md      # Docs stub
 ```
+
+#### 📝 Adding Your Credit
+
+When creating components, add your information to get credited:
+
+```tsx
+/**
+ * @description Your component description
+ * @category Component Category
+ * @source https://instagram.com/p/your-video
+ * @author Your Name
+ * @github https://github.com/yourusername
+ * @x https://x.com/yourusername  (optional)
+ * @website https://yourwebsite.com  (optional)
+ */
+```
+
+Your name will appear:
+
+- When users install your component
+- In `clipmotion credits` command
+- On the ClipMotion website (coming soon!)
+
+#### Why Add Credits?
+
+- 🌟 Get recognition for your work
+- 🔗 Drive traffic to your GitHub/social profiles
+- 📈 Build your open source portfolio
+- 🤝 Grow your network in the dev community
 
 ### 2. Implement the animation
 

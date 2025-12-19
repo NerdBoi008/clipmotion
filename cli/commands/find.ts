@@ -4,47 +4,13 @@ import { join } from "path";
 import ora from "ora";
 import { select, confirm } from "@clack/prompts";
 import { addComponent } from "./add.js";
-import type { Framework } from "./init.js";
-
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
-interface FindOptions {
-  debug?: boolean;
-  install?: boolean;
-  overwrite?: boolean;
-  cwd?: string;
-}
-
-interface ComponentConfig {
-  framework: Framework;
-  aliases: {
-    components: string;
-    utils: string;
-  };
-  registry?: {
-    baseUrl?: string;
-  };
-}
-
-interface RegistryEntry {
-  id: string;
-  name: string;
-  description: string;
-  sources: string[];
-  tags: string[];
-  difficulty: "easy" | "medium" | "hard";
-  libraries: Framework[];
-  demoUrl?: string;
-  dependencies?: string[];
-}
-
-interface RegistryIndex {
-  animations: RegistryEntry[];
-  version: string;
-  lastUpdated: string;
-}
+import type {
+  Framework,
+  FindOptions,
+  ComponentConfig,
+  RegistryEntry,
+  RegistryIndex,
+} from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONSTANTS                                  */
