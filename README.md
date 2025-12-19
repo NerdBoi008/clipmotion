@@ -106,6 +106,41 @@ clipmotion add blur-image-toggle --debug          # verbose logs
 clipmotion add blur-image-toggle --path src/ui    # custom target path
 ```
 
+#### Framework Override
+
+By default, Clipmotion installs components for the framework defined in your configuration.
+
+If a component is not available for your current framework, you can override it:
+
+```bash
+clipmotion add blur-toggle --framework=react
+```
+
+**Example:**
+Your project is **Next.js**, but the component only exists for **React**:
+
+```bash
+clipmotion add some-component --framework=react
+```
+
+#### Installing Multiple Components
+
+You can install multiple components in a single command:
+
+```bash
+clipmotion add blur-toggle fade-in --framework=vue
+```
+
+### Helpful Suggestions
+
+If a component is not available for the selected framework, the CLI will:
+
+- Detect available frameworks for that component
+- Suggest compatible alternatives
+- Provide clear, actionable error messages
+
+This ensures you always know **what’s available and how to proceed**.
+
 ***
 
 ### 3. Find a component by video URL

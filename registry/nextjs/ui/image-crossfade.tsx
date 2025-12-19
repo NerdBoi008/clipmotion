@@ -1,3 +1,12 @@
+/**
+ * @description Smooth image crossfade effect on click
+ * @category Click Interactions
+ * @source https://www.instagram.com/moin_m.a.l.e.k/
+ * @author NerdBoi008
+ * @github https://github.com/nerdboi008
+ * @x https://x.com/moin_malek_
+ */
+
 import Image from "next/image";
 import { cn } from "../lib/utils";
 

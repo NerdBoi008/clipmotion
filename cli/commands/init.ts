@@ -3,26 +3,7 @@ import { join } from "path";
 import chalk from "chalk";
 import { execa } from "execa";
 import { select, intro, confirm, log, outro, spinner } from "@clack/prompts";
-
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
-export type Framework = "nextjs" | "react" | "vue" | "angular";
-
-type PackageManager = "npm" | "yarn" | "pnpm" | "bun";
-
-interface Config {
-  $schema: string;
-  framework: Framework;
-  aliases: {
-    components: string;
-    utils: string;
-  };
-  registry: {
-    baseUrl: string;
-  };
-}
+import type { Framework, PackageManager, InitConfig as Config } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                              FRAMEWORK DETECT                              */

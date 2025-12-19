@@ -8,6 +8,7 @@ import { findComponent } from "./commands/find.js";
 import { createComponent } from "./commands/create.js";
 import { join } from "path";
 import { readFileSync } from "fs";
+import { showCredits } from "./commands/credits.js";
 
 function getVersion(): string {
   try {
@@ -45,6 +46,10 @@ program
   .option("--src-dir", "use src directory", false)
   .option("--css-variables", "use css variables", true)
   .option("-l, --local", "use local registry (for development)", false)
+  .option(
+    "-f, --framework <framework>",
+    "override framework (nextjs, react, vue, angular)"
+  )
   .action(addComponent);
 
 program
@@ -76,5 +81,12 @@ program
   .command("registry:build")
   .description("Build registry JSON files from component source files")
   .action(buildRegistry);
+
+program
+  .command("credits")
+  .description("Show credits for contributors")
+  .argument("[component-name]", "show credits for specific component")
+  .option("-l, --local", "use local registry (for development)", false)
+  .action(showCredits);
 
 program.parse();

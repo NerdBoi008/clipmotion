@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📝 Animation Request
+    url: https://github.com/NerdBoi008/clipmotion/issues/new?template=animation-request.md
+    about: Use this template to request new animations or features.
+  - name: 🐞 Bug Report
+    url: https://github.com/NerdBoi008/clipmotion/issues/new?template=bug-report.md
+    about: Use this template to report bugs or unexpected behavior.
