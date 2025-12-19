@@ -1,6 +1,6 @@
 ---
 name: "🐞 Bug Report"
-description: "Report a bug in the ClipMotion CLI or components"
+about: "Report a bug in the ClipMotion CLI or components"
 title: "[Bug] <short description>"
 labels: ["bug"]
 assignees: []
