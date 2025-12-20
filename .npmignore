@@ -1,0 +1,60 @@
+# Source files (to only publish compiled build/)
+src/
+commands/
+*.ts
+!*.d.ts
+tsconfig.json
+tsconfig.*.json
+
+# Build tools
+.eslintrc*
+.prettierrc*
+.editorconfig
+jest.config.*
+vitest.config.*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Documentation (optional - some keep README.md)
+docs/
+*.md
+!README.md
+!LICENSE
+!LICENSE.md
+
+# Tests
+tests/
+test/
+__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+coverage/
+
+# Examples and dev files
+examples/
+sandbox/
+playground/
+test-project/
+
+# Registry source (only ship built JSON)
+registry/
+!public/
+
+# Development
+.vscode/
+.idea/
+*.log
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Misc
+*.map

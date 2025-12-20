@@ -1,0 +1,93 @@
+{
+  "frameworks": [
+    "default",
+    "nextjs",
+    "react"
+  ],
+  "stats": {
+    "totalComponents": 4,
+    "totalUtilities": 2,
+    "totalFrameworks": 3
+  },
+  "lastUpdated": "2025-12-19T19:34:43.686Z",
+  "animations": [
+    {
+      "id": "chromatic-flow-background",
+      "name": "chromatic-flow-background",
+      "description": "A flowing, chromatic background that paints dynamic trails as the cursor moves.",
+      "libraries": [
+        "nextjs"
+      ],
+      "sources": [
+        "https://www.instagram.com/reel/DSR2twIDEsu"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    },
+    {
+      "id": "image-crossfade",
+      "name": "image-crossfade",
+      "description": "Smooth image crossfade effect on click",
+      "libraries": [
+        "nextjs"
+      ],
+      "sources": [
+        "https://www.instagram.com/p/DRPOaKMiItG"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    },
+    {
+      "id": "utils",
+      "name": "utils",
+      "description": "utils lib for nextjs",
+      "libraries": [
+        "nextjs"
+      ],
+      "sources": [
+        "registry\\nextjs\\lib\\utils.ts"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    },
+    {
+      "id": "chromatic-flow-background",
+      "name": "chromatic-flow-background",
+      "description": "A flowing, chromatic background that paints dynamic trails as the cursor moves.",
+      "libraries": [
+        "react"
+      ],
+      "sources": [
+        "https://www.instagram.com/reel/DSR2twIDEsu"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    },
+    {
+      "id": "image-crossfade",
+      "name": "image-crossfade",
+      "description": "Smooth image crossfade effect on click",
+      "libraries": [
+        "react"
+      ],
+      "sources": [
+        "registry\\react\\ui\\image-crossfade.tsx"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    },
+    {
+      "id": "utils",
+      "name": "utils",
+      "description": "utils lib for react",
+      "libraries": [
+        "react"
+      ],
+      "sources": [
+        "registry\\react\\lib\\utils.ts"
+      ],
+      "difficulty": "medium",
+      "tags": []
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "name": "clipmotion",
+  "version": "0.1.0",
+  "description": "CLI tool to add animation components from video clips (Instagram, TikTok, YouTube)",
+  "author": "nerdboi008",
+  "license": "MIT",
+  "type": "module",
+  "main": "./build/index.cjs",
+  "types": "./build/index.d.cts",
+  "bin": {
+    "clipmotion": "./build/index.cjs"
+  },
+  "files": [
+    "build/index.cjs",
+    "build/index.d.cts",
+    "public/r/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nerdboi008/clipmotion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nerdboi008/clipmotion/issues"
+  },
+  "homepage": "https://github.com/nerdboi008/clipmotion#readme",
+  "keywords": [
+    "animation",
+    "cli",
+    "components",
+    "instagram",
+    "tiktok",
+    "youtube",
+    "react",
+    "nextjs",
+    "vue",
+    "angular",
+    "motion",
+    "video-to-code",
+    "ui-components",
+    "shadcn",
+    "design-system"
+  ],
+  "scripts": {
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "registry:build": "npm run build && node build/index.cjs registry:build",
+    "prepublishOnly": "npm run build && npm run registry:build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf build",
+    "test:install": "npm pack && npm install -g clipmotion-*.tgz",
+    "dev:add": "npm run build && npm run registry:build && node build/index.cjs add --local",
+    "dev:test": "npm run build && npm run registry:build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "execa": "^9.6.1",
+    "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsdown": "^0.18.0",
+    "typescript": "^5.7.2",
+    "next": "^15.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "@types/react": "^18.3.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.5.0",
+    "vue": "^3.4.0"
+  },
+  "exports": {
+    "./types": "./build/types.d.cts",
+    ".": "./build/index.cjs"
+  }
+}
