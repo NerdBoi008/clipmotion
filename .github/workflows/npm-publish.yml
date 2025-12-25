@@ -33,6 +33,15 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # 🔐 Verify NPM_TOKEN is set
+      - name: Check NPM Token
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "❌ NPM_TOKEN secret is not set"
+            exit 1
+          fi
+          echo "✅ NPM_TOKEN is configured"
+
       # 🔐 Safety check: version == tag
       - name: Verify version matches tag
         run: |
