@@ -3,15 +3,19 @@ import { join } from "path";
 import chalk from "chalk";
 import { execa } from "execa";
 import { select, intro, confirm, log, outro, spinner } from "@clack/prompts";
-import type { Framework, PackageManager, InitConfig as Config } from "./types.js";
+import type {
+  Framework,
+  PackageManager,
+  InitConfig as Config,
+  InitOptions,
+  InitResult,
+} from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                              FRAMEWORK DETECT                              */
 /* -------------------------------------------------------------------------- */
 
-function detectFramework(): Framework | null {
-  const cwd = process.cwd();
-
+function detectFramework(cwd: string): Framework | null {
   // Check for Next.js config files
   const nextConfigs = ["next.config.js", "next.config.mjs", "next.config.ts"];
   if (nextConfigs.some((config) => existsSync(join(cwd, config)))) {
@@ -48,11 +52,11 @@ function detectFramework(): Framework | null {
 
 function detectPackageManager(): PackageManager {
   const cwd = process.cwd();
-  
+
   if (existsSync(join(cwd, "bun.lockb"))) return "bun";
   if (existsSync(join(cwd, "pnpm-lock.yaml"))) return "pnpm";
   if (existsSync(join(cwd, "yarn.lock"))) return "yarn";
-  
+
   return "npm";
 }
 
@@ -61,7 +65,7 @@ async function installDeps(deps: string[]): Promise<void> {
 
   const pm = detectPackageManager();
   const s = spinner();
-  
+
   s.start(chalk.blue(`Installing dependencies with ${pm}...`));
 
   try {
@@ -72,15 +76,19 @@ async function installDeps(deps: string[]): Promise<void> {
       bun: ["add", ...deps],
     };
 
-    await execa(pm, commands[pm], { 
+    await execa(pm, commands[pm], {
       stdio: "pipe", // Change to pipe for cleaner output
-      cwd: process.cwd() 
+      cwd: process.cwd(),
     });
 
     s.stop(chalk.green(`Dependencies installed successfully`));
   } catch (error) {
     s.stop(chalk.red(`✗ Failed to install dependencies`));
-    log.error(chalk.red(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    log.error(
+      chalk.red(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      )
+    );
     throw error;
   }
 }
@@ -89,35 +97,46 @@ async function installDeps(deps: string[]): Promise<void> {
 /*                            PATH VALIDATION                                 */
 /* -------------------------------------------------------------------------- */
 
-function getDefaultPaths(framework: Framework): Config["aliases"] {
+function getDefaultPaths(
+  framework: Framework,
+  componentsDir?: string
+): Config["aliases"] {
+  const defaultComponentsDir = componentsDir || "components";
+
   const pathMap: Record<Framework, Config["aliases"]> = {
     nextjs: {
-      components: "components",
-      utils: "components/utils",
+      components: defaultComponentsDir,
+      utils: `${defaultComponentsDir}/utils`,
     },
     react: {
-      components: "components",
-      utils: "components/utils",
+      components: defaultComponentsDir,
+      utils: `${defaultComponentsDir}/utils`,
     },
     vue: {
-      components: "components",
+      components: defaultComponentsDir,
       utils: "utils",
     },
     angular: {
-      components: "app/components",
-      utils: "app/components/utils",
+      components: componentsDir || "app/components",
+      utils: `${componentsDir || "app/components"}/utils`,
     },
   };
 
   return pathMap[framework];
 }
 
-function ensureDirectories(paths: Config["aliases"]): void {
+function ensureDirectories(
+  paths: Config["aliases"],
+  cwd: string,
+  interactive: boolean = true
+): void {
   Object.values(paths).forEach((path) => {
-    const fullPath = join(process.cwd(), path);
+    const fullPath = join(cwd, path);
     if (!existsSync(fullPath)) {
       mkdirSync(fullPath, { recursive: true });
-      log.success(chalk.gray(`Created directory: ${path}`));
+      if (interactive) {
+        log.success(chalk.gray(`Created directory: ${path}`));
+      }
     }
   });
 }
@@ -126,11 +145,11 @@ function ensureDirectories(paths: Config["aliases"]): void {
 /*                              CONFIG BUILDER                                */
 /* -------------------------------------------------------------------------- */
 
-function buildConfig(framework: Framework): Config {
+function buildConfig(framework: Framework, componentsDir?: string): Config {
   return {
     $schema: "https://clipmotion.dev/schema.json",
     framework,
-    aliases: getDefaultPaths(framework),
+    aliases: getDefaultPaths(framework, componentsDir),
     registry: {
       baseUrl:
         "https://raw.githubusercontent.com/nerdboi008/clipmotion/main/public/r",
@@ -153,93 +172,120 @@ function getFrameworkDeps(framework: Framework): string[] {
 /*                                   INIT                                     */
 /* -------------------------------------------------------------------------- */
 
-export async function init(): Promise<void> {
-  intro(chalk.bold.blue("🎬 ClipMotion Setup"));
+export async function init(options: InitOptions): Promise<InitResult> {
+  const cwd = options.cwd || process.cwd();
+  const interactive = options.interactive !== false;
+  const configPath = join(cwd, "clipmotion-components.json");
 
-  const configPath = join(process.cwd(), "clipmotion-components.json");
+  if (interactive) {
+    intro(chalk.bold.blue("🎬 ClipMotion Setup"));
+  }
 
   // Check if config already exists
   if (existsSync(configPath)) {
-    const overwrite = await confirm({
-      message: chalk.yellow(
-        "Configuration file already exists. Do you want to overwrite it?"
-      ),
-      initialValue: false,
-    });
+    if (interactive) {
+      const overwrite = await confirm({
+        message: chalk.yellow(
+          "Configuration file already exists. Do you want to overwrite it?"
+        ),
+        initialValue: false,
+      });
 
-    if (!overwrite) {
-      outro(chalk.gray("Setup cancelled."));
-      process.exit(0);
+      if (!overwrite) {
+        outro(chalk.gray("Setup cancelled."));
+        process.exit(0);
+      }
+    } else {
+      // Non-interactive mode should throw error
+      throw new Error("Config file already exists");
     }
   }
 
   // Framework detection
-  const detectedFramework = detectFramework();
-  let framework: Framework;
+  let framework: Framework = options.framework || "react";
 
-  if (detectedFramework) {
-    log.success(
-      chalk.green(`Auto-detected framework: ${chalk.bold(detectedFramework)}`)
-    );
-    
-    const useDetected = await confirm({
-      message: `Use ${detectedFramework}?`,
-      initialValue: true,
-    });
+  if (!options.framework) {
+    const detectedFramework = detectFramework(cwd);
 
-    if (useDetected) {
+    if (detectedFramework && interactive) {
+      log.success(
+        chalk.green(`Auto-detected framework: ${chalk.bold(detectedFramework)}`)
+      );
+
+      const useDetected = await confirm({
+        message: `Use ${detectedFramework}?`,
+        initialValue: true,
+      });
+
+      framework = useDetected ? detectedFramework : await promptFramework();
+    } else if (detectedFramework) {
+      // Non-interactive with detection
       framework = detectedFramework;
-    } else {
+    } else if (interactive) {
+      log.warn(chalk.yellow("⚠ Could not auto-detect framework"));
       framework = await promptFramework();
     }
-  } else {
-    log.warn(chalk.yellow("⚠ Could not auto-detect framework"));
-    framework = await promptFramework();
+    // else: stays as 'react' (default)
   }
 
   // Build and save config
-  const config = buildConfig(framework);
+  const config = options.componentsDir
+    ? buildConfig(framework, options.componentsDir)
+    : buildConfig(framework);
 
-  log.info(
-    chalk.gray(
-      [
-        "Configuration:",
-        `  Framework: ${framework}`,
-        `  Components: ${config.aliases.components}`,
-        `  Utils: ${config.aliases.utils}`,
-      ].join("\n")
-    ) +
-      chalk.yellow(
-        `\n\n💡 Tip: Utils are inside components/ to avoid conflicts with existing lib/utils`
-      )
-  );
-  
+  if (interactive) {
+    log.info(
+      chalk.gray(
+        [
+          "Configuration:",
+          `  Framework: ${framework}`,
+          `  Components: ${config.aliases.components}`,
+          `  Utils: ${config.aliases.utils}`,
+        ].join("\n")
+      ) +
+        chalk.yellow(
+          `\n\n💡 Tip: Utils are inside components/ to avoid conflicts with existing lib/utils`
+        )
+    );
+  }
+
   try {
     writeFileSync(configPath, JSON.stringify(config, null, 2));
-    log.success(chalk.green("Configuration saved"));
+    if (interactive) {
+      log.success(chalk.green("Configuration saved"));
+    }
   } catch (error) {
-    log.error(chalk.red("Failed to save configuration"));
+    if (interactive) {
+      log.error(chalk.red("Failed to save configuration"));
+    }
     throw error;
   }
 
   // Create directories
-  ensureDirectories(config.aliases);
+  ensureDirectories(config.aliases, cwd, interactive);
 
   // Install dependencies
   const deps = getFrameworkDeps(framework);
-  if (deps.length > 0) {
+  if (deps.length > 0 && interactive) {
     log.step(chalk.blue("Installing required dependencies..."));
     await installDeps(deps);
   }
 
   // Success message
-  outro(
-    chalk.green.bold("✨ Setup complete!") +
-      chalk.gray("\n\nNext steps:") +
-      chalk.cyan("\n  clipmotion add <component-name>") +
-      chalk.gray("\n  or") +
-      chalk.cyan("\n  clipmotion find <video-url>\n")
-  );
+  if (interactive) {
+    outro(
+      chalk.green.bold("✨ Setup complete!") +
+        chalk.gray("\n\nNext steps:") +
+        chalk.cyan("\n  clipmotion add <component-name>") +
+        chalk.gray("\n  or") +
+        chalk.cyan("\n  clipmotion find <video-url>\n")
+    );
+  }
+
+  return {
+    framework: config.framework,
+    componentsDir: config.aliases.components,
+  };
 }
 
 /* -------------------------------------------------------------------------- */

@@ -53,8 +53,7 @@ Thumbs.db
 # Optional eslint cache
 .eslintcache
 
-# Lock files (keep one based on your preference)
-# Uncomment the ones you DON'T use:
+# Lock files
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml

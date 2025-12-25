@@ -1,13 +1,8 @@
 {
   "name": "image-crossfade",
-  "type": "registry:component",
   "description": "Smooth image crossfade effect on click",
-  "files": [
-    {
-      "name": "image-crossfade.tsx",
-      "content": "/**\r\n * @description Smooth image crossfade effect on click\r\n * @category Click Interactions\r\n * @source https://www.instagram.com/p/DRPOaKMiItG\r\n * @author NerdBoi008\r\n * @github https://github.com/nerdboi008\r\n * @x https://x.com/moin_malek_\r\n * @website https://www.nerdboi.online\r\n */\r\n\r\nimport Image from \"next/image\";\r\nimport { cn } from \"@/components/utils\";\r\n\r\nconst ImageCrossfade = ({\r\n  from,\r\n  to,\r\n  isDark,\r\n}: {\r\n  from: string;\r\n  to: string;\r\n  isDark: boolean;\r\n}) => {\r\n  return (\r\n    <div className=\"relative w-full h-64 overflow-hidden\">\r\n      {/* Base Image */}\r\n      <Image\r\n        src={from}\r\n        alt=\"Image From\"\r\n        fill\r\n        style={{ objectFit: \"cover\" }}\r\n        className={cn(\r\n          \"transition-opacity duration-700 ease-in-out\",\r\n          isDark ? \"opacity-100\" : \"opacity-0\"\r\n        )}\r\n      />\r\n\r\n      {/* Toggled Image */}\r\n      <Image\r\n        src={to}\r\n        alt=\"Image To\"\r\n        fill\r\n        style={{ objectFit: \"cover\" }}\r\n        className={cn(\r\n          \"transition-opacity duration-700 ease-in-out absolute inset-0\",\r\n          isDark ? \"opacity-0\" : \"opacity-100\"\r\n        )}\r\n      />\r\n    </div>\r\n  );\r\n};\r\n\r\nexport default ImageCrossfade;"
-    }
-  ],
+  "type": "registry:component",
+  "framework": "nextjs",
   "dependencies": [
     "next"
   ],
@@ -15,9 +10,16 @@
   "registryDependencies": [
     "utils"
   ],
+  "files": [
+    {
+      "name": "image-crossfade.tsx",
+      "content": "/**\r\n * @description Smooth image crossfade effect on click\r\n * @category Click Interactions\r\n * @source https://www.instagram.com/p/DRPOaKMiItG\r\n * @author NerdBoi008\r\n * @github https://github.com/nerdboi008\r\n * @x https://x.com/moin_malek_\r\n * @website https://www.nerdboi.online\r\n */\r\n\r\nimport Image from \"next/image\";\r\nimport { cn } from \"@/components/utils\";\r\n\r\nconst ImageCrossfade = ({\r\n  from,\r\n  to,\r\n  isDark,\r\n}: {\r\n  from: string;\r\n  to: string;\r\n  isDark: boolean;\r\n}) => {\r\n  return (\r\n    <div className=\"relative w-full h-64 overflow-hidden\">\r\n      {/* Base Image */}\r\n      <Image\r\n        src={from}\r\n        alt=\"Image From\"\r\n        fill\r\n        style={{ objectFit: \"cover\" }}\r\n        className={cn(\r\n          \"transition-opacity duration-700 ease-in-out\",\r\n          isDark ? \"opacity-100\" : \"opacity-0\"\r\n        )}\r\n      />\r\n\r\n      {/* Toggled Image */}\r\n      <Image\r\n        src={to}\r\n        alt=\"Image To\"\r\n        fill\r\n        style={{ objectFit: \"cover\" }}\r\n        className={cn(\r\n          \"transition-opacity duration-700 ease-in-out absolute inset-0\",\r\n          isDark ? \"opacity-0\" : \"opacity-100\"\r\n        )}\r\n      />\r\n    </div>\r\n  );\r\n};\r\n\r\nexport default ImageCrossfade;",
+      "type": "registry:component"
+    }
+  ],
   "meta": {
-    "source": "https://www.instagram.com/p/DRPOaKMiItG",
     "category": "Click Interactions",
+    "source": "registry\\nextjs\\ui\\image-crossfade.tsx",
     "contributor": {
       "name": "NerdBoi008",
       "github": "https://github.com/nerdboi008",

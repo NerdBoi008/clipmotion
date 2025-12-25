@@ -9,12 +9,8 @@ import {
 import { join, basename, extname, relative, dirname } from "path";
 import chalk from "chalk";
 import ora, { type Ora } from "ora";
-import type {
-  ContributorInfo,
-  RegistryItem,
-  BuildStats,
-  ComponentType,
-} from "./types.js";
+import { registryItemSchema, type RegistryItem } from "../registry-schema.js";
+import type { ContributorInfo, BuildStats, ComponentType } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONSTANTS                                  */
@@ -31,9 +27,19 @@ const FRAMEWORK_DEPENDENCIES: Record<string, string> = {
 
 const IGNORED_DIRS = ["node_modules", ".git", "dist", "build", "__tests__"];
 
+const COMPONENT_TYPE_MAP: Record<string, ComponentType> = {
+  ui: "registry:component",
+  lib: "registry:lib",
+  hooks: "registry:hook",
+};
+
 /* -------------------------------------------------------------------------- */
-/*                                   UTILS                                    */
+/*                                FILE UTILS                                  */
 /* -------------------------------------------------------------------------- */
+
+export function safeStatSync(path: string) {
+  return statSync(path);
+}
 
 function isValidComponentFile(filename: string): boolean {
   const ext = extname(filename);
@@ -46,22 +52,25 @@ function ensureDirectory(dir: string): void {
   }
 }
 
-function getComponentType(dirName: string): ComponentType {
-  const typeMap: Record<string, ComponentType> = {
-    ui: "registry:component",
-    lib: "registry:lib",
-    hooks: "registry:hook",
-  };
-
-  return typeMap[dirName] || "registry:component";
-}
-
 function logError(message: string, error?: Error): void {
-  console.error(chalk.red(`✗ ${message}`));
   if (error) {
-    console.error(chalk.gray(`  ${error.message}`));
+    console.error(chalk.red(`✗ ${message}`), error);
+  } else {
+    console.error(chalk.red(`✗ ${message}`));
   }
 }
+
+function fatal(message: string, details?: string): never {
+  console.error(chalk.red(`✗ ${message}`));
+  if (details) {
+    console.error(chalk.gray(`  ${details}`));
+  }
+  process.exit(1);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            METADATA EXTRACTION                             */
+/* -------------------------------------------------------------------------- */
 
 function extractContributorInfo(content: string): ContributorInfo | undefined {
   const authorMatch = content.match(/@author\s+(.+)/);
@@ -81,28 +90,48 @@ function extractContributorInfo(content: string): ContributorInfo | undefined {
   };
 }
 
-function transformImports(content: string, framework: string): string {
-  // Replace relative imports with path aliases for the generated code
-  let transformed = content;
+function extractMetadata(content: string, filePath: string) {
+  const descriptionMatch = content.match(/@description\s+(.+)/);
+  const categoryMatch = content.match(/@category\s+(.+)/);
+  const contributor = extractContributorInfo(content);
 
-  // Transform ../lib/utils to @/components/utils
-  transformed = transformed.replace(
-    /from\s+['"](\.\.\/lib\/utils)['"]/g,
-    'from "@/components/utils"'
-  );
+  const meta: {
+    source: string;
+    category?: string;
+    contributor?: ContributorInfo;
+  } = {
+    source: relative(process.cwd(), filePath),
+  };
 
-  // Transform ../lib/* to @/components/*
-  transformed = transformed.replace(
-    /from\s+['"](\.\.\/lib\/([^'"]+))['"]/g,
-    'from "@/components/$2"'
-  );
+  if (categoryMatch?.[1]?.trim()) {
+    meta.category = categoryMatch[1].trim();
+  }
 
-  return transformed;
+  if (contributor) {
+    meta.contributor = contributor;
+  }
+
+  return {
+    description: descriptionMatch?.[1]?.trim(),
+    meta,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
 /*                           DEPENDENCY EXTRACTION                            */
 /* -------------------------------------------------------------------------- */
+
+function extractPackageFromImport(importPath: string): string | null {
+  // Skip relative imports and path aliases
+  if (importPath?.startsWith(".") || importPath?.startsWith("@/")) {
+    return null;
+  }
+
+  // Extract package name (handle scoped packages)
+  return importPath?.startsWith("@")
+    ? importPath.split("/").slice(0, 2).join("/")
+    : importPath?.split("/")[0] || null;
+}
 
 function extractDependencies(content: string, framework: string): string[] {
   const dependencies = new Set<string>();
@@ -113,28 +142,17 @@ function extractDependencies(content: string, framework: string): string[] {
     dependencies.add(baseDep);
   }
 
-  // Extract imports
+  // Extract imports using multiple patterns
   const importPatterns = [
-    /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g, // ES6 imports
-    /require\s*\(['"]([^'"]+)['"]\)/g, // CommonJS
-    /import\s*\(['"]([^'"]+)['"]\)/g, // Dynamic imports
+    /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,
+    /require\s*\(['"]([^'"]+)['"]\)/g,
+    /import\s*\(['"]([^'"]+)['"]\)/g,
   ];
 
   for (const pattern of importPatterns) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
-      const importPath = match[1];
-
-      // Skip relative imports and path aliases
-      if (importPath?.startsWith(".") || importPath?.startsWith("@/")) {
-        continue;
-      }
-
-      // Extract package name (handle scoped packages)
-      const packageName = importPath?.startsWith("@")
-        ? importPath.split("/").slice(0, 2).join("/")
-        : importPath?.split("/")[0];
-
+      const packageName = extractPackageFromImport(match[1]!);
       if (packageName) {
         dependencies.add(packageName);
       }
@@ -146,8 +164,6 @@ function extractDependencies(content: string, framework: string): string[] {
 
 function extractDevDependencies(content: string): string[] {
   const devDeps = new Set<string>();
-
-  // Common dev-only imports
   const devPatterns = [/@testing-library/, /vitest/, /jest/, /@types\//];
 
   for (const pattern of devPatterns) {
@@ -156,9 +172,7 @@ function extractDevDependencies(content: string): string[] {
         new RegExp(`from ['"]([^'"]*${pattern.source}[^'"]*)['"]`)
       );
       if (match) {
-        const pkg = match[1]?.startsWith("@")
-          ? match[1].split("/").slice(0, 2).join("/")
-          : match[1]?.split("/")[0];
+        const pkg = extractPackageFromImport(match[1]!);
         if (pkg) {
           devDeps.add(pkg);
         }
@@ -172,26 +186,24 @@ function extractDevDependencies(content: string): string[] {
 function extractRegistryDependencies(content: string): string[] {
   const deps = new Set<string>();
 
-  // Common registry dependencies
-  const patterns = [
+  // Check for common utility imports
+  const utilPatterns = [
     { regex: /from ["']@\/components\/utils["']/g, dep: "utils" },
-    { regex: /from ["']@\/components\/utils\/cn["']/g, dep: "cn" },
-    { regex: /from ["']@\/lib\/utils["']/g, dep: "utils" }, // Keep for backwards compat
+    { regex: /from ["']@\/lib\/utils["']/g, dep: "utils" },
   ];
 
-  for (const { regex, dep } of patterns) {
+  for (const { regex, dep } of utilPatterns) {
     if (regex.test(content)) {
       deps.add(dep);
     }
   }
 
-  // Extract specific utility imports from components folder
-  const utilImportRegex = /from ["']@\/components\/([^"'\/]+)["']/g;
+  // Extract specific component imports
+  const componentImportRegex = /from ["']@\/components\/([^"'\/]+)["']/g;
   let match;
-  while ((match = utilImportRegex.exec(content)) !== null) {
-    if (match[1] !== "utils") {
-      // Don't add 'utils' as a component
-      deps.add(match[1]!);
+  while ((match = componentImportRegex.exec(content)) !== null) {
+    if (match[1] && match[1] !== "utils") {
+      deps.add(match[1]);
     }
   }
 
@@ -199,8 +211,29 @@ function extractRegistryDependencies(content: string): string[] {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              FILE PROCESSING                               */
+/*                            IMPORT TRANSFORMATION                           */
 /* -------------------------------------------------------------------------- */
+
+function transformImports(content: string): string {
+  return content
+    .replace(/from\s+['"](\.\.\/lib\/utils)['"]/g, 'from "@/components/utils"')
+    .replace(/from\s+['"](\.\.\/lib\/([^'"]+))['"]/g, 'from "@/components/$2"');
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         REGISTRY ITEM CREATION                             */
+/* -------------------------------------------------------------------------- */
+
+function determineTargetFileName(file: string, type: ComponentType): string {
+  const componentName = basename(file, extname(file));
+  const ext = extname(file);
+
+  if (type === "registry:lib") {
+    return `${componentName}/index${ext}`;
+  }
+
+  return file;
+}
 
 function createRegistryItem(
   file: string,
@@ -211,59 +244,23 @@ function createRegistryItem(
   try {
     const componentName = basename(file, extname(file));
     const fileContent = readFileSync(filePath, "utf-8");
+    const transformedContent = transformImports(fileContent);
 
-    // ✅ Transform imports before storing
-    const transformedContent = transformImports(fileContent, framework);
+    const { description, meta } = extractMetadata(fileContent, filePath);
+    const targetFileName = determineTargetFileName(file, type);
 
-    // Extract metadata from comments
-    const descriptionMatch = transformedContent.match(/@description\s+(.+)/);
-    const categoryMatch = transformedContent.match(/@category\s+(.+)/);
-    const sourceMatch = fileContent.match(/@source\s+(https?:\/\/[^\s]+)/);
-    const contributor = extractContributorInfo(fileContent); // ✅ Extract contributor
-
-    // Determine the target file structure based on type
-    let targetFileName = file;
-
-    if (type === "registry:lib") {
-      // For lib files like utils.ts, organize into folders
-      // utils.ts → utils/index.ts
-      const ext = extname(file);
-      targetFileName = `${componentName}/index${ext}`;
-    } else if (type === "registry:hook") {
-      // hooks stay as-is: use-media-query.ts
-      targetFileName = file;
-    } else {
-      // Components stay as-is: blur-toggle.tsx
-      targetFileName = file;
-    }
-
-    const meta: {
-      source: string;
-      category?: string;
-      contributor?: ContributorInfo;
-    } = {
-      source: sourceMatch?.[1]?.trim() || relative(process.cwd(), filePath),
-    };
-
-    const category = categoryMatch?.[1]?.trim();
-    if (category) {
-      meta.category = category;
-    }
-
-    if (contributor) {
-      meta.contributor = contributor; // ✅ Add to meta
-    }
-
-    return {
+    const rawItem = {
       name: componentName,
       type,
+      framework: framework as any, // Let Zod handle the actual validation
       description:
-        descriptionMatch?.[1]?.trim() ||
+        description ||
         `${componentName} ${type.split(":")[1]} for ${framework}`,
       files: [
         {
           name: targetFileName,
           content: transformedContent,
+          type: type, // Added type field often expected in registry schemas
         },
       ],
       dependencies: extractDependencies(transformedContent, framework),
@@ -271,16 +268,69 @@ function createRegistryItem(
       registryDependencies: extractRegistryDependencies(transformedContent),
       meta,
     };
+
+    const result = registryItemSchema.safeParse(rawItem);
+
+    if (!result.success) {
+      console.error(
+        chalk.red(`\n❌ Schema Validation Error in: ${chalk.bold(file)}`)
+      );
+
+      // Map through Zod issues for a clean output
+      result.error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
+        console.error(
+          chalk.yellow(`  → [${path}]: `) + chalk.white(issue.message)
+        );
+      });
+
+      // Since we want to "catch errors before push," we exit 1 to fail the build/CI
+      process.exit(1);
+    }
+
+    return result.data as RegistryItem;
   } catch (error) {
     logError(`Failed to process ${file}`, error as Error);
     return null;
   }
 }
 
-function writeRegistryItem(item: RegistryItem, outputPath: string): boolean {
+/* -------------------------------------------------------------------------- */
+/*                            FILE/DIR PROCESSING                             */
+/* -------------------------------------------------------------------------- */
+
+function processFile(
+  file: string,
+  dir: string,
+  outputDir: string,
+  framework: string,
+  type: ComponentType
+): boolean {
+  const filePath = join(dir, file);
+
+  // Check if it's a valid file
+  try {
+    const stat = __test__.safeStatSync(filePath);
+    if (stat.isDirectory() || !isValidComponentFile(file)) {
+      return false;
+    }
+  } catch (error) {
+    logError(`Failed to stat ${file}`, error as Error);
+    return false;
+  }
+
+  // Create and write registry item
+  const registryItem = createRegistryItem(file, filePath, framework, type);
+  if (!registryItem) {
+    return false;
+  }
+
+  const componentName = basename(file, extname(file));
+  const outputPath = join(outputDir, `${componentName}.json`);
+
   try {
     ensureDirectory(dirname(outputPath));
-    writeFileSync(outputPath, JSON.stringify(item, null, 2), "utf-8");
+    writeFileSync(outputPath, JSON.stringify(registryItem, null, 2), "utf-8");
     return true;
   } catch (error) {
     logError(`Failed to write ${outputPath}`, error as Error);
@@ -288,17 +338,13 @@ function writeRegistryItem(item: RegistryItem, outputPath: string): boolean {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                           DIRECTORY PROCESSING                             */
-/* -------------------------------------------------------------------------- */
-
-async function processDirectory(
+function processDirectory(
   dir: string,
   outputDir: string,
   framework: string,
   type: ComponentType,
   spinner: Ora
-): Promise<number> {
+): number {
   if (!existsSync(dir)) {
     return 0;
   }
@@ -307,29 +353,9 @@ async function processDirectory(
   const files = readdirSync(dir);
 
   for (const file of files) {
-    const filePath = join(dir, file);
-    const stat = statSync(filePath);
-
-    // Skip directories and invalid files
-    if (stat.isDirectory()) {
-      continue;
-    }
-
-    if (!isValidComponentFile(file)) {
-      continue;
-    }
-
     spinner.text = `Processing ${chalk.cyan(framework)}/${chalk.gray(file)}...`;
 
-    const registryItem = createRegistryItem(file, filePath, framework, type);
-    if (!registryItem) {
-      continue;
-    }
-
-    const componentName = basename(file, extname(file));
-    const outputPath = join(outputDir, `${componentName}.json`);
-
-    if (writeRegistryItem(registryItem, outputPath)) {
+    if (processFile(file, dir, outputDir, framework, type)) {
       processed++;
     }
   }
@@ -337,18 +363,27 @@ async function processDirectory(
   return processed;
 }
 
-async function processFramework(
+/* -------------------------------------------------------------------------- */
+/*                          FRAMEWORK PROCESSING                              */
+/* -------------------------------------------------------------------------- */
+
+interface FrameworkStats {
+  components: number;
+  utilities: number;
+}
+
+function processFramework(
   framework: string,
   registryDir: string,
   outputDir: string,
   spinner: Ora
-): Promise<{ components: number; utilities: number }> {
+): FrameworkStats {
   const frameworkDir = join(registryDir, framework);
   const frameworkOutputDir = join(outputDir, framework);
 
   ensureDirectory(frameworkOutputDir);
 
-  const stats = {
+  const stats: FrameworkStats = {
     components: 0,
     utilities: 0,
   };
@@ -356,7 +391,7 @@ async function processFramework(
   // Process UI components
   const uiDir = join(frameworkDir, "ui");
   if (existsSync(uiDir)) {
-    stats.components = await processDirectory(
+    stats.components = processDirectory(
       uiDir,
       frameworkOutputDir,
       framework,
@@ -368,7 +403,7 @@ async function processFramework(
   // Process library utilities
   const libDir = join(frameworkDir, "lib");
   if (existsSync(libDir)) {
-    stats.utilities = await processDirectory(
+    stats.utilities = processDirectory(
       libDir,
       frameworkOutputDir,
       framework,
@@ -380,7 +415,7 @@ async function processFramework(
   // Process hooks
   const hooksDir = join(frameworkDir, "hooks");
   if (existsSync(hooksDir)) {
-    const hooks = await processDirectory(
+    const hooks = processDirectory(
       hooksDir,
       frameworkOutputDir,
       framework,
@@ -391,6 +426,100 @@ async function processFramework(
   }
 
   return stats;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           FRAMEWORK DISCOVERY                              */
+/* -------------------------------------------------------------------------- */
+
+function isValidFrameworkDir(dir: string, registryDir: string): boolean {
+  if (IGNORED_DIRS.includes(dir)) {
+    return false;
+  }
+
+  const fullPath = join(registryDir, dir);
+
+  try {
+    const stat = safeStatSync(fullPath);
+    if (!stat.isDirectory()) {
+      return false;
+    }
+
+    // Check if it has at least one valid subdirectory
+    return (
+      existsSync(join(fullPath, "ui")) ||
+      existsSync(join(fullPath, "lib")) ||
+      existsSync(join(fullPath, "hooks"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function discoverFrameworks(registryDir: string): string[] {
+  const allEntries = readdirSync(registryDir);
+  return allEntries.filter((dir) => isValidFrameworkDir(dir, registryDir));
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             INDEX GENERATION                               */
+/* -------------------------------------------------------------------------- */
+
+function createAnimationIndex(
+  framework: string,
+  frameworkOutputDir: string
+): any[] {
+  if (!existsSync(frameworkOutputDir)) {
+    return [];
+  }
+
+  const animations: any[] = [];
+  const jsonFiles = readdirSync(frameworkOutputDir).filter((f) =>
+    f.endsWith(".json")
+  );
+
+  for (const jsonFile of jsonFiles) {
+    try {
+      const filePath = join(frameworkOutputDir, jsonFile);
+      const registryItem = JSON.parse(readFileSync(filePath, "utf-8"));
+
+      animations.push({
+        id: registryItem.name,
+        name: registryItem.name,
+        description: registryItem.description,
+        libraries: [framework],
+        sources: [registryItem.meta?.source || ""],
+        difficulty: registryItem.meta?.difficulty || "medium",
+        tags: registryItem.meta?.tags || [],
+        demoUrl: registryItem.meta?.demoUrl || undefined,
+      });
+    } catch (error) {
+      logError(`Failed to index ${jsonFile}`, error as Error);
+    }
+  }
+
+  return animations;
+}
+
+function writeIndexFile(
+  outputDir: string,
+  frameworks: string[],
+  stats: BuildStats,
+  animations: any[]
+): void {
+  const indexPath = join(outputDir, "index.json");
+  const indexData = {
+    frameworks,
+    stats: {
+      totalComponents: stats.components,
+      totalUtilities: stats.utilities,
+      totalFrameworks: stats.frameworks,
+    },
+    lastUpdated: new Date().toISOString(),
+    animations,
+  };
+
+  writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -407,39 +536,22 @@ export async function buildRegistry(): Promise<void> {
     // Validate registry directory exists
     if (!existsSync(registryDir)) {
       spinner.fail(chalk.red("Registry directory not found"));
-      console.log(chalk.yellow(`  Expected: ${registryDir}`));
-      process.exit(1);
+      fatal("Registry directory not found", `Expected: ${registryDir}`);
     }
 
-    // Ensure output directory exists
     ensureDirectory(outputDir);
 
-    // Get all framework directories
-    const allEntries = readdirSync(registryDir);
-    const frameworks = allEntries.filter((dir) => {
-      if (IGNORED_DIRS.includes(dir)) {
-        return false;
-      }
-
-      const fullPath = join(registryDir, dir);
-      const stat = statSync(fullPath);
-
-      return (
-        stat.isDirectory() &&
-        (existsSync(join(fullPath, "ui")) ||
-          existsSync(join(fullPath, "lib")) ||
-          existsSync(join(fullPath, "hooks")))
-      );
-    });
-
+    // Discover frameworks
+    const frameworks = discoverFrameworks(registryDir);
     if (frameworks.length === 0) {
       spinner.fail(chalk.red("No valid framework directories found"));
-      console.log(
-        chalk.yellow("  Expected structure: registry/<framework>/ui/")
+      fatal(
+        "No valid framework directories found",
+        "Expected structure: registry/<framework>/ui/"
       );
-      process.exit(1);
     }
 
+    // Initialize stats
     const stats: BuildStats = {
       components: 0,
       utilities: 0,
@@ -452,66 +564,28 @@ export async function buildRegistry(): Promise<void> {
     // Process each framework
     for (const framework of frameworks) {
       try {
-        const frameworkStats = await processFramework(
+        const frameworkStats = processFramework(
           framework,
           registryDir,
           outputDir,
           spinner
         );
 
-        const frameworkOutputDir = join(outputDir, framework);
-        if (existsSync(frameworkOutputDir)) {
-          const jsonFiles = readdirSync(frameworkOutputDir).filter((f) =>
-            f.endsWith(".json")
-          );
-          for (const jsonFile of jsonFiles) {
-            try {
-              const filePath = join(frameworkOutputDir, jsonFile);
-              const registryItem = JSON.parse(readFileSync(filePath, "utf-8"));
-
-              allAnimations.push({
-                id: registryItem.name,
-                name: registryItem.name,
-                description: registryItem.description,
-                libraries: [framework],
-                sources: [registryItem.meta?.source || ""],
-                difficulty: registryItem.meta?.difficulty || "medium",
-                tags: registryItem.meta?.tags || [],
-                demoUrl: registryItem.meta?.demoUrl || undefined,
-              });
-            } catch (e) {
-              logError(`Failed to index ${jsonFile}`, e as Error);
-            }
-          }
-        }
-
         stats.components += frameworkStats.components;
         stats.utilities += frameworkStats.utilities;
+
+        // Create animation index for this framework
+        const frameworkOutputDir = join(outputDir, framework);
+        const animations = createAnimationIndex(framework, frameworkOutputDir);
+        allAnimations.push(...animations);
       } catch (error) {
         stats.errors++;
         logError(`Failed to process framework: ${framework}`, error as Error);
       }
     }
 
-    // Create index file
-    const indexPath = join(outputDir, "index.json");
-    writeFileSync(
-      indexPath,
-      JSON.stringify(
-        {
-          frameworks,
-          stats: {
-            totalComponents: stats.components,
-            totalUtilities: stats.utilities,
-            totalFrameworks: stats.frameworks,
-          },
-          lastUpdated: new Date().toISOString(),
-          animations: allAnimations,
-        },
-        null,
-        2
-      )
-    );
+    // Write index file
+    writeIndexFile(outputDir, frameworks, stats, allAnimations);
 
     // Show results
     spinner.succeed(chalk.green.bold("✨ Registry built successfully!"));
@@ -534,3 +608,8 @@ export async function buildRegistry(): Promise<void> {
     process.exit(1);
   }
 }
+
+export const __test__ = {
+  safeStatSync,
+  processFile,
+};
