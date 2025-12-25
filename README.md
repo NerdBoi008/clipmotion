@@ -2,31 +2,35 @@
 
 **ClipMotion** is a CLI tool that turns animation ideas from real‑world videos (Instagram reels, TikTok, YouTube, etc.) into reusable components for modern web frameworks.
 
+[![npm version](https://badge.fury.io/js/clipmotion.svg)](https://www.npmjs.com/package/clipmotion)
+[![Tests](https://github.com/NerdBoi008/clipmotion/actions/workflows/ci.yml/badge.svg)](https://github.com/NerdBoi008/clipmotion/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 You can:
 
-- Add ready‑made animation components to your project  
-- Generate a registry of components from source files  
-- Find components by video URL  
-- Scaffold new components for contributors using a shared structure  
+- Add ready‑made animation components to your project
+- Generate a registry of components from source files
+- Find components by video URL
+- Scaffold new components for contributors using a shared structure
 
-***
+---
 
 ## ✨ Features
 
-- `clipmotion init` – initialize project config and paths  
-- `clipmotion add` – add animation components to your project  
-- `clipmotion find` – find components by video URL (Instagram, TikTok, YouTube, …)  
-- `clipmotion create` – scaffold new components for contribution  
-- `clipmotion registry:build` – build JSON registry used by the CLI  
+- `clipmotion init` – initialize project config and paths
+- `clipmotion add` – add animation components to your project
+- `clipmotion find` – find components by video URL (Instagram, TikTok, YouTube, …)
+- `clipmotion create` – scaffold new components for contribution
+- `clipmotion registry:build` – build JSON registry used by the CLI
 
 Supports multiple frameworks:
 
-- Next.js  
-- React  
-- Vue  
-- Angular  
+- Next.js
+- React
+- Vue
+- Angular
 
-***
+---
 
 ## 📦 Installation
 
@@ -47,7 +51,35 @@ You can also run it via `npx` without global install:
 npx clipmotion --help
 ```
 
-***
+---
+
+## Testing
+
+ClipMotion includes comprehensive test suites to ensure reliability.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:cli          # Unit tests only
+npm run test:registry     # registry tests only
+npm run test:e2e          # End-to-end tests only
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### CI/CD
+
+Tests run automatically on every push and pull request via GitHub Actions. View the workflow status in the [Actions tab](https://github.com/NerdBoi008/clipmotion/actions).
+
+---
 
 ## 🚀 Getting Started (User Flow)
 
@@ -59,7 +91,7 @@ clipmotion init
 
 This will:
 
-- Detect your framework (Next.js, React, Vue, Angular)  
+- Detect your framework (Next.js, React, Vue, Angular)
 - Create `clipmotion-components.json` with:
   - `framework`
   - `aliases.components`
@@ -84,7 +116,7 @@ Example config:
 
 **Note:** Utils are placed inside the components folder by default to avoid conflicts with existing `lib/utils` files in your project.
 
-***
+---
 
 ### 2. Add a component
 
@@ -94,9 +126,9 @@ clipmotion add blur-image-toggle
 
 This will:
 
-- Fetch the component definition from the registry  
-- Install any required npm dependencies  
-- Write component files to your configured `components` alias  
+- Fetch the component definition from the registry
+- Install any required npm dependencies
+- Write component files to your configured `components` alias
 
 Options:
 
@@ -113,14 +145,14 @@ By default, Clipmotion installs components for the framework defined in your con
 If a component is not available for your current framework, you can override it:
 
 ```bash
-clipmotion add blur-toggle --framework=react
+clipmotion add blur-toggle --framework react
 ```
 
 **Example:**
 Your project is **Next.js**, but the component only exists for **React**:
 
 ```bash
-clipmotion add some-component --framework=react
+clipmotion add some-component --framework react
 ```
 
 #### Installing Multiple Components
@@ -128,7 +160,7 @@ clipmotion add some-component --framework=react
 You can install multiple components in a single command:
 
 ```bash
-clipmotion add blur-toggle fade-in --framework=vue
+clipmotion add blur-toggle fade-in --framework vue
 ```
 
 ### Helpful Suggestions
@@ -141,7 +173,7 @@ If a component is not available for the selected framework, the CLI will:
 
 This ensures you always know **what’s available and how to proceed**.
 
-***
+---
 
 ### 3. Find a component by video URL
 
@@ -153,12 +185,12 @@ clipmotion find https://www.instagram.com/p/DRPOaKMiItG/
 
 The command will:
 
-- Look up the URL in the registry index  
-- Show details (name, difficulty, supported frameworks, tags)  
+- Look up the URL in the registry index
+- Show details (name, difficulty, supported frameworks, tags)
 - Let you choose to:
-  - Install the component  
-  - View demo  
-  - See implementation guide  
+  - Install the component
+  - View demo
+  - See implementation guide
 
 You can also auto‑install:
 
@@ -194,7 +226,7 @@ clipmotion add component-name --overwrite
 # Replaces utils file entirely (use with caution)
 ```
 
-***
+---
 
 ## 🧱 Repository Structure (For Contributors)
 
@@ -221,10 +253,10 @@ public/
 
 The CLI commands use:
 
-- `registry/*` as the **source of truth**  
-- `public/r/*` as the **runtime registry** for installs  
+- `registry/*` as the **source of truth**
+- `public/r/*` as the **runtime registry** for installs
 
-***
+---
 
 ## 🛠 CLI Commands
 
@@ -232,12 +264,12 @@ The CLI commands use:
 
 Initialize ClipMotion in an existing project.
 
-- Detects framework from files (`next.config.*`, `angular.json`, `vite.config.*`, `package.json`)  
-- Asks for confirmation or manual choice if needed  
-- Sets default component + utils paths  
+- Detects framework from files (`next.config.*`, `angular.json`, `vite.config.*`, `package.json`)
+- Asks for confirmation or manual choice if needed
+- Sets default component + utils paths
 - Installs framework‑specific deps (`clsx`, `tailwind-merge`, etc., where relevant)
 
-***
+---
 
 ### `clipmotion add`
 
@@ -249,12 +281,12 @@ clipmotion add <components...>
 
 Supports:
 
-- Registry dependencies (other internal components/utils)  
-- npm dependencies and devDependencies  
-- Overwrite checks for existing files  
-- Debug logging  
+- Registry dependencies (other internal components/utils)
+- npm dependencies and devDependencies
+- Overwrite checks for existing files
+- Debug logging
 
-***
+---
 
 ### `clipmotion find`
 
@@ -264,10 +296,10 @@ Find and optionally install a component by video URL:
 clipmotion find <video-url> [options]
 ```
 
-- Matches normalized URLs against `public/r/index.json`  
-- Shows metadata and next steps (install / demo / guide)  
+- Matches normalized URLs against `public/r/index.json`
+- Shows metadata and next steps (install / demo / guide)
 
-***
+---
 
 ### `clipmotion create`
 
@@ -279,7 +311,7 @@ clipmotion create <component-name>
 
 The command will:
 
-- Ask for framework, video URL, description, category, difficulty  
+- Ask for framework, video URL, description, category, difficulty
 - Create:
   - `registry/<framework>/ui/<component-name>.tsx|.vue`
   - `registry/<framework>/examples/<component-name>.tsx|.vue`
@@ -288,7 +320,7 @@ The command will:
 
 This is the recommended way for contributors to start a new animation.
 
-***
+---
 
 ### `clipmotion registry:build`
 
@@ -300,30 +332,31 @@ clipmotion registry:build
 
 What it does:
 
-- Scans `registry/<framework>/ui`, `lib`, `hooks`  
+- Scans `registry/<framework>/ui`, `lib`, `hooks`
 - Extracts:
   - Files
   - npm dependencies
   - dev dependencies
-  - registry dependencies (e.g., `@/lib/utils`)  
-- Emits `public/r/<framework>/*.json` with a `RegistryItem` structure  
+  - registry dependencies (e.g., `@/lib/utils`)
+- Emits `public/r/<framework>/*.json` with a `RegistryItem` structure
 - Generates `public/r/index.json` with:
-  - List of animations  
-  - Framework support  
-  - Basic metadata  
-  - `lastUpdated` timestamp  
+  - List of animations
+  - Framework support
+  - Basic metadata
+  - `lastUpdated` timestamp
 
-***
+---
 
 ## 🤝 Contributing
 
 Contributions are **welcome and encouraged**.
 
 - Read the [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+
   - Local setup
   - Component creation flow
   - Registry build process
-  - PR checklist  
+  - PR checklist
 
 - Please also review the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
@@ -344,7 +377,7 @@ clipmotion add blur-image-toggle
 # 5. Commit & open a PR
 ```
 
-***
+---
 
 ## 🧪 Development
 
@@ -354,7 +387,7 @@ Run the CLI locally without global install:
 # From repo root
 npm install
 npm run build    # if applicable
-node dist/cli.js --help
+node build/index.cjs --help
 ```
 
 Or with a local link:
@@ -364,18 +397,18 @@ npm link
 clipmotion --help
 ```
 
-***
+---
 
 ## 📄 License
 
 This project is open‑source under the **MIT License**.  
 See [LICENSE](./LICENSE) for details.
 
-***
+---
 
 ## 🙌 Acknowledgements
 
-- Inspired by tools like `shadcn/ui` and other component CLIs  
-- Built to help developers quickly recreate and share animations seen in the wild  
+- Inspired by tools like `shadcn/ui` and other component CLIs
+- Built to help developers quickly recreate and share animations seen in the wild
 
 If you build something with ClipMotion, consider sharing it and linking back to the repo so others can discover it too.

@@ -1,6 +1,6 @@
 {
   "name": "clipmotion",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool to add animation components from video clips (Instagram, TikTok, YouTube)",
   "author": "nerdboi008",
   "license": "MIT",
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nerdboi008/clipmotion.git"
+    "url": "https://github.com/NerdBoi008/clipmotion.git"
   },
   "bugs": {
     "url": "https://github.com/nerdboi008/clipmotion/issues"
@@ -51,7 +51,7 @@
     "registry:build": "npm run build && node build/index.cjs registry:build",
     "prepublishOnly": "npm run build && npm run registry:build",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf build",
+    "clean": "rimraf build",
     "dev:add": "npm run build && npm run registry:build && node build/index.cjs add --local",
     "dev:test": "npm run build && npm run registry:build",
     "test:install": "npm pack && npm install -g clipmotion-*.tgz",
@@ -78,6 +78,7 @@
     "next": "^15.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "rimraf": "^6.1.2",
     "tailwind-merge": "^2.6.0",
     "tsdown": "^0.18.0",
     "typescript": "^5.7.2",
@@ -85,7 +86,9 @@
     "vue": "^3.4.0"
   },
   "exports": {
-    "./types": "./build/types.d.cts",
-    ".": "./build/index.cjs"
+    ".": {
+      "require": "./build/index.cjs",
+      "types": "./build/index.d.cts"
+    }
   }
 }
