@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org/
+          # ❌ Remove registry-url to avoid automatic .npmrc creation
 
       - run: npm ci
       - run: npm run build
@@ -43,18 +43,16 @@ jobs:
           TAG_VERSION=${GITHUB_REF_NAME#v}
           
           if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch"
+            echo "❌ Version mismatch: $PACKAGE_VERSION != $TAG_VERSION"
             exit 1
           fi
-          echo "✅ Version matches: $PACKAGE_VERSION"
+          echo "✅ Version $PACKAGE_VERSION matches tag"
 
-      # ✅ Remove the .npmrc file that expects NODE_AUTH_TOKEN
-      - name: Remove .npmrc with token placeholder
+      # ✅ Configure npm to use OIDC explicitly
+      - name: Configure npm for OIDC
         run: |
-          rm -f ~/.npmrc
-          rm -f .npmrc
           npm config set registry https://registry.npmjs.org/
+          npm config list
 
       - name: Publish to npm
         run: npm publish --provenance --access public
-
