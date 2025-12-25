@@ -22,10 +22,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
+    
+    # ✨ These permissions are REQUIRED for Trusted Publishers
     permissions:
       contents: read
-      id-token: write  # Required for npm provenance
-
+      id-token: write  # This enables OIDC for npm trusted publishing
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -37,31 +39,17 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      # 🔐 Verify NPM_TOKEN is set (Fixed)
-      - name: Verify NPM Token
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "❌ NPM_TOKEN secret is not set"
-            exit 1
-          fi
-          echo "✅ NPM_TOKEN is configured"
-
-      # 🔐 Safety check: version == tag
       - name: Verify version matches tag
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           TAG_VERSION=${GITHUB_REF_NAME#v}
-
+          
           if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ package.json version ($PACKAGE_VERSION) does not match tag ($TAG_VERSION)"
+            echo "❌ Version mismatch: $PACKAGE_VERSION != $TAG_VERSION"
             exit 1
           fi
-          echo "✅ Version matches tag: $PACKAGE_VERSION"
+          echo "✅ Version $PACKAGE_VERSION matches tag"
 
-      # Publish to npm
+      # ✨ No NODE_AUTH_TOKEN needed with Trusted Publishers!
       - name: Publish to npm
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
