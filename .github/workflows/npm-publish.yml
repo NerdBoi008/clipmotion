@@ -15,6 +15,7 @@ jobs:
           node-version: 20
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   publish-npm:
@@ -30,6 +31,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - run: npm ci
+      - run: npm run build
 
       # 🔐 Safety check: version == tag
       - name: Verify version matches tag
