@@ -21,6 +21,9 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for npm provenance
 
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +36,12 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      # 🔐 Verify NPM_TOKEN is set
-      - name: Check NPM Token
+      # 🔐 Verify NPM_TOKEN is set (Fixed)
+      - name: Verify NPM Token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+          if [ -z "$NPM_TOKEN" ]; then
             echo "❌ NPM_TOKEN secret is not set"
             exit 1
           fi
@@ -52,7 +57,10 @@ jobs:
             echo "❌ package.json version ($PACKAGE_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
+          echo "✅ Version matches tag: $PACKAGE_VERSION"
 
-      - run: npm publish --access public
+      # Publish to npm
+      - name: Publish to npm
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
