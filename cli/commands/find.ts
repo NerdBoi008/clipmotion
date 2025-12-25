@@ -41,8 +41,20 @@ function logError(message: string, error?: Error): void {
 function normalizeUrl(url: string): string {
   try {
     const urlObj = new URL(url);
-    urlObj.search = "";
+
+    // Remove hash
     urlObj.hash = "";
+
+    // Preserve identity params (like YouTube video ID)
+    const identityParams = new Set(["v"]);
+
+    // Remove tracking params only
+    [...urlObj.searchParams.keys()].forEach((key) => {
+      if (!identityParams.has(key)) {
+        urlObj.searchParams.delete(key);
+      }
+    });
+
     return urlObj.toString().replace(/\/$/, "");
   } catch {
     return url.trim().replace(/\/$/, "");
@@ -357,7 +369,11 @@ export async function findComponent(
     spinner.stop();
 
     // Validate registry structure
-    if (!registry || !Array.isArray(registry.animations)) {
+    if (
+      !registry ||
+      !Array.isArray(registry.animations) ||
+      registry.animations.length === 0
+    ) {
       logDebug("Registry missing animations array:", registry);
       console.log(chalk.yellow("⚠  No animations found in registry\n"));
 
@@ -413,12 +429,12 @@ export async function findComponent(
     switch (action) {
       case "install": {
         if (framework && !animation.libraries.includes(framework)) {
-          console.log(
+          console.error(
             chalk.red(
               `\n✗ Cannot install: Component not available for ${framework}`
             )
           );
-          console.log(
+          console.error(
             chalk.gray(
               `  Available frameworks: ${animation.libraries.join(", ")}\n`
             )

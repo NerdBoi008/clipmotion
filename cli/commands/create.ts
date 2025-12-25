@@ -49,7 +49,7 @@ function toPascalCase(str: string): string {
 }
 
 function validateComponentName(name: string): boolean {
-  return /^[a-z0-9-]+$/.test(name);
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -317,7 +317,43 @@ Happy coding! 🚀
 async function promptForDetails(
   componentName: string,
   options: CreateOptions
-): Promise<Required<Omit<CreateOptions, "debug">>> {
+): Promise<Required<Omit<CreateOptions, "debug" | "interactive">>> {
+  if (options.interactive === false) {
+    const requiredFields = [
+      "framework",
+      "videoUrl",
+      "description",
+      "category",
+      "difficulty",
+      "author",
+    ];
+
+    const missingFields = requiredFields.filter(
+      (field) => !options[field as keyof CreateOptions]
+    );
+
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Non-interactive mode requires these options: ${missingFields.join(
+          ", "
+        )}`
+      );
+    }
+
+    return {
+      cwd: options.cwd!,
+      framework: options.framework!,
+      videoUrl: options.videoUrl!,
+      description: options.description!,
+      category: options.category!,
+      difficulty: options.difficulty!,
+      author: options.author!,
+      github: options.github || "",
+      x: options.x || "",
+      website: options.website || "",
+    };
+  }
+
   console.log(chalk.blue("\n🎨 Component Setup\n"));
 
   // Framework
@@ -448,6 +484,7 @@ async function promptForDetails(
     })) as string);
 
   return {
+    cwd: options.cwd!,
     framework,
     videoUrl,
     description,
@@ -462,7 +499,7 @@ async function promptForDetails(
 
 function createComponentFiles(
   componentName: string,
-  details: Required<Omit<CreateOptions, "debug">>
+  details: Required<Omit<CreateOptions, "debug" | "interactive">>
 ): void {
   const {
     framework,
@@ -475,8 +512,8 @@ function createComponentFiles(
     x,
     website,
   } = details;
-
-  const registryDir = join(process.cwd(), "registry");
+  const cwd = details.cwd ?? process.cwd();
+  const registryDir = join(cwd, "registry");
   const frameworkDir = join(registryDir, framework);
   const uiDir = join(frameworkDir, "ui");
   const examplesDir = join(frameworkDir, "examples");
@@ -540,7 +577,7 @@ function createComponentFiles(
 
 export async function createComponent(
   componentName: string,
-  options: CreateOptions = {}
+  options: CreateOptions
 ): Promise<void> {
   if (options.debug) {
     DEBUG = true;
@@ -550,8 +587,9 @@ export async function createComponent(
   console.log(chalk.bold.blue("\n🎬 Create New Component\n"));
 
   // Validate component name
-  const kebabName = toKebabCase(componentName);
-  if (!validateComponentName(kebabName)) {
+  const rawName = componentName.trim();
+  const kebabName = toKebabCase(rawName);
+  if (!kebabName || !validateComponentName(kebabName)) {
     console.error(chalk.red("✗ Invalid component name"));
     console.log(
       chalk.gray("  Use kebab-case: e.g., blur-image-toggle, fade-in-text\n")
@@ -559,8 +597,10 @@ export async function createComponent(
     process.exit(1);
   }
 
+  const cwd = options.cwd ?? process.cwd();
+
   // Check if component already exists
-  const registryDir = join(process.cwd(), "registry");
+  const registryDir = join(cwd, "registry");
   if (existsSync(registryDir)) {
     const frameworks: Framework[] = ["nextjs", "react", "vue", "angular"];
     const existing = frameworks.some((fw) =>

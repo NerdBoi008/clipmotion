@@ -498,7 +498,7 @@ async function installSingleComponent(
       }
 
       // Special handling for utils files
-      if (isUtilsFile(file.name)) {
+      if (isUtilsFile(targetPath)) {
         spinner && (spinner.text = `Checking utils file...`);
 
         const mergeResult = await mergeUtilsFile(

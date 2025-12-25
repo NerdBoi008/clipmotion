@@ -9,6 +9,7 @@ import { createComponent } from "./commands/create.js";
 import { join } from "path";
 import { readFileSync } from "fs";
 import { showCredits } from "./commands/credits.js";
+import chalk from "chalk";
 
 function getVersion(): string {
   try {
@@ -30,7 +31,26 @@ program
 program
   .command("init")
   .description("Initialize your project configuration")
-  .action(init);
+  .option(
+    "-f, --framework <framework>",
+    "Specify framework (react, nextjs, vue, angular)"
+  )
+  .option("-c, --components-dir <dir>", "Custom components directory")
+  .option("--no-interactive", "Run in non-interactive mode")
+  .action(async (options) => {
+    try {
+      await init({
+        framework: options.framework,
+        componentsDir: options.componentsDir,
+        interactive: options.interactive,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(chalk.red(`Error: ${error.message}`));
+      }
+      process.exit(1);
+    }
+  });
 
 program
   .command("add")
@@ -80,6 +100,7 @@ program
   .option("--x <url>", "your X (Twitter) profile URL")
   .option("--website <url>", "your personal website URL")
   .option("--debug", "enable debug logs")
+  .option("--no-interactive", "Run in non-interactive mode")
   .action(createComponent);
 
 program

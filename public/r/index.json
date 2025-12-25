@@ -9,7 +9,7 @@
     "totalUtilities": 2,
     "totalFrameworks": 3
   },
-  "lastUpdated": "2025-12-19T19:34:43.686Z",
+  "lastUpdated": "2025-12-24T19:04:33.337Z",
   "animations": [
     {
       "id": "chromatic-flow-background",
@@ -19,7 +19,7 @@
         "nextjs"
       ],
       "sources": [
-        "https://www.instagram.com/reel/DSR2twIDEsu"
+        "registry\\nextjs\\ui\\chromatic-flow-background.tsx"
       ],
       "difficulty": "medium",
       "tags": []
@@ -32,7 +32,7 @@
         "nextjs"
       ],
       "sources": [
-        "https://www.instagram.com/p/DRPOaKMiItG"
+        "registry\\nextjs\\ui\\image-crossfade.tsx"
       ],
       "difficulty": "medium",
       "tags": []
@@ -58,7 +58,7 @@
         "react"
       ],
       "sources": [
-        "https://www.instagram.com/reel/DSR2twIDEsu"
+        "registry\\react\\ui\\chromatic-flow-background.tsx"
       ],
       "difficulty": "medium",
       "tags": []

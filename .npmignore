@@ -19,7 +19,7 @@ vitest.config.*
 .travis.yml
 .circleci/
 
-# Documentation (optional - some keep README.md)
+# Documentation
 docs/
 *.md
 !README.md

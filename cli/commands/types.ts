@@ -86,6 +86,20 @@ export interface BuildStats {
   errors: number;
 }
 
+/* --------------------------- Init command ----------------------------- */
+
+export interface InitOptions {
+  cwd?: string;
+  framework?: Framework;
+  componentsDir?: string;
+  interactive?: boolean;
+}
+
+export interface InitResult {
+  framework: string;
+  componentsDir: string;
+}
+
 /* --------------------------- Add command ----------------------------- */
 
 export interface AddOptions {
@@ -129,6 +143,7 @@ export interface RegistryComponent {
 /* --------------------------- Create command -------------------------- */
 
 export interface CreateOptions {
+  cwd?: string,
   framework?: Framework;
   videoUrl?: string;
   description?: string;
@@ -139,6 +154,7 @@ export interface CreateOptions {
   x?: string;
   website?: string;
   debug?: boolean;
+  interactive?: boolean;
 }
 
 /* ---------------------------- Find command --------------------------- */
