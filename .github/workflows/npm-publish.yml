@@ -51,4 +51,4 @@ jobs:
 
       # ✅ NO env: NODE_AUTH_TOKEN here!
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: npm publish --access public
