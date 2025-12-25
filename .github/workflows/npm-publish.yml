@@ -22,7 +22,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     
-    # ✅ CRITICAL: These permissions enable Trusted Publishers
     permissions:
       contents: read
       id-token: write
@@ -44,11 +43,18 @@ jobs:
           TAG_VERSION=${GITHUB_REF_NAME#v}
           
           if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch: $PACKAGE_VERSION != $TAG_VERSION"
+            echo "❌ Version mismatch"
             exit 1
           fi
-          echo "✅ Version $PACKAGE_VERSION matches tag"
+          echo "✅ Version matches: $PACKAGE_VERSION"
 
-      # ✅ NO env: NODE_AUTH_TOKEN here!
+      # ✅ Remove the .npmrc file that expects NODE_AUTH_TOKEN
+      - name: Remove .npmrc with token placeholder
+        run: |
+          rm -f ~/.npmrc
+          rm -f .npmrc
+          npm config set registry https://registry.npmjs.org/
+
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --provenance --access public
+
