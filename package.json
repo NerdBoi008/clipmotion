@@ -2,13 +2,13 @@
   "name": "clipmotion",
   "version": "0.2.0",
   "description": "CLI tool to add animation components from video clips (Instagram, TikTok, YouTube)",
-  "author": "nerdboi008",
+  "author": "NerdBoi008",
   "license": "MIT",
   "type": "module",
   "main": "./build/index.cjs",
   "types": "./build/index.d.cts",
   "bin": {
-    "clipmotion": "./build/index.cjs"
+    "clipmotion": "build/index.cjs"
   },
   "files": [
     "build/index.cjs",
@@ -22,12 +22,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/NerdBoi008/clipmotion.git"
+    "url": "git+https://github.com/NerdBoi008/clipmotion.git"
   },
   "bugs": {
-    "url": "https://github.com/nerdboi008/clipmotion/issues"
+    "url": "https://github.com/NerdBoi008/clipmotion/issues"
   },
-  "homepage": "https://github.com/nerdboi008/clipmotion#readme",
+  "homepage": "https://github.com/NerdBoi008/clipmotion#readme",
   "keywords": [
     "animation",
     "cli",

@@ -3,45 +3,48 @@ name: Publish Node.js Package
 on:
   release:
     types: [published]
-
+    
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-
+          node-version: 24
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
 
       - run: npm ci
+      - run: npm run build
 
-      # 🔐 Safety check: version == tag
       - name: Verify version matches tag
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           TAG_VERSION=${GITHUB_REF_NAME#v}
 
           if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ package.json version ($PACKAGE_VERSION) does not match tag ($TAG_VERSION)"
+            echo "❌ Version mismatch: $PACKAGE_VERSION != $TAG_VERSION"
             exit 1
           fi
+          echo "✅ Version $PACKAGE_VERSION matches tag"
 
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
+        run: npm publish --provenance --access public
