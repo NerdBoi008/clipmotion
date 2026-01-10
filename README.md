@@ -15,7 +15,7 @@ You can:
 
 ---
 
-## ✨ Features
+## Features
 
 - `clipmotion init` – initialize project config and paths
 - `clipmotion add` – add animation components to your project
@@ -32,7 +32,7 @@ Supports multiple frameworks:
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Global install (recommended for day-to-day use)
@@ -81,7 +81,7 @@ Tests run automatically on every push and pull request via GitHub Actions. View 
 
 ---
 
-## 🚀 Getting Started (User Flow)
+## Getting Started (User Flow)
 
 ### 1. Initialize ClipMotion in your project
 
@@ -198,7 +198,7 @@ You can also auto‑install:
 clipmotion find <video-url> --install
 ```
 
-## 🔧 Handling Utils Files
+## Handling Utils Files
 
 ClipMotion components may depend on shared utilities like `cn()` (className merger).
 
@@ -228,7 +228,7 @@ clipmotion add component-name --overwrite
 
 ---
 
-## 🧱 Repository Structure (For Contributors)
+## Repository Structure (For Contributors)
 
 In this repo, source components live in `registry/` and are compiled into JSON under `public/r/` for the CLI.
 
@@ -258,7 +258,7 @@ The CLI commands use:
 
 ---
 
-## 🛠 CLI Commands
+## CLI Commands
 
 ### `clipmotion init`
 
@@ -347,7 +347,7 @@ What it does:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are **welcome and encouraged**.
 
@@ -379,7 +379,7 @@ clipmotion add blur-image-toggle
 
 ---
 
-## 🧪 Development
+## Development
 
 Run the CLI locally without global install:
 
@@ -399,14 +399,12 @@ clipmotion --help
 
 ---
 
-## 📄 License
+## License
 
 This project is open‑source under the **MIT License**.  
 See [LICENSE](./LICENSE) for details.
 
----
-
-## 🙌 Acknowledgements
+## Acknowledgements
 
 - Inspired by tools like `shadcn/ui` and other component CLIs
 - Built to help developers quickly recreate and share animations seen in the wild

@@ -259,7 +259,7 @@ export default function ${pascalName}Example() {
 function getContributionGuide(): string {
   return `# Contributing Your Component
 
-Thank you for contributing to ClipMotion! 🎬
+Thank you for contributing to ClipMotion!
 
 ## Next Steps
 
@@ -293,7 +293,7 @@ Thank you for contributing to ClipMotion! 🎬
 
 ## File Structure
 
-\`\`\`
+\`\`\`text
 registry/<framework>/
 ├── ui/              # Your component goes here
 ├── examples/        # Usage examples
@@ -306,7 +306,7 @@ registry/<framework>/
 - Open a discussion on GitHub
 - Join our Discord community
 
-Happy coding! 🚀
+Happy coding!
 `;
 }
 

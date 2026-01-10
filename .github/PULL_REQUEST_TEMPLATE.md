@@ -4,7 +4,7 @@ Thank you for contributing to ClipMotion! Please fill out the details below to h
 
 ---
 
-## 📌 Overview
+## Overview
 
 **What does this PR do?**
 
@@ -22,7 +22,7 @@ Thank you for contributing to ClipMotion! Please fill out the details below to h
 
 ---
 
-## 🎥 For Animation Components
+## For Animation Components
 
 > Skip this section if your PR is not about a component.
 
@@ -60,7 +60,7 @@ List key files you added/changed, for example:
 
 ---
 
-## 🧰 For CLI / Core Changes
+## For CLI / Core Changes
 
 > Skip this section if your PR only adds components.
 
@@ -89,7 +89,7 @@ If **Yes**, describe what breaks and how users should migrate:
 
 ---
 
-## ✅ Checklist
+## Checklist
 
 Please confirm:
 
@@ -102,7 +102,7 @@ Please confirm:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 **How did you test your changes?**
 
@@ -125,7 +125,7 @@ npm run dev
 
 ---
 
-## 📸 Screenshots / Demos (Optional but Highly Recommended)
+## Screenshots / Demos (Optional but Highly Recommended)
 
 If your PR adds or changes animations, please attach:
 
@@ -134,7 +134,7 @@ If your PR adds or changes animations, please attach:
 
 ---
 
-## 🔎 Additional Notes
+## Additional Notes
 
 Add anything else reviewers should know (design decisions, trade‑offs, follow‑up ideas, etc.):
 

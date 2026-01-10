@@ -7,7 +7,7 @@ This guide explains how to set up the repo, add new components, and improve the 
 
 ---
 
-## 👀 What You Can Contribute
+## What You Can Contribute
 
 - New animation components (from reels/videos)
 - Better implementations (performance, accessibility, cleanup)
@@ -18,7 +18,7 @@ This guide explains how to set up the repo, add new components, and improve the 
 
 ---
 
-## 🧩 Project Structure
+## Project Structure
 
 Key folders:
 
@@ -44,7 +44,7 @@ clipmotion/
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 - Node.js LTS (18+ recommended)
 - pnpm / npm / yarn (any supported by the project)
@@ -52,7 +52,7 @@ clipmotion/
 
 ---
 
-## 🚀 Local Setup
+## Local Setup
 
 ```bash
 # 1. Fork & clone
@@ -87,7 +87,7 @@ When users run `clipmotion add`, dependencies are installed fresh in their proje
 
 ---
 
-## 🧱 Adding a New Component (Recommended Flow)
+## Adding a New Component (Recommended Flow)
 
 The easiest way to contribute is to add a new animation component based on a video.
 
@@ -108,7 +108,7 @@ When you run `clipmotion init`, it creates a config with paths optimized to avoi
 **Why utils inside components?**  
 Many projects already have `lib/utils` or `src/lib/utils` files. Placing ClipMotion utilities inside the components folder prevents accidental overwrites.
 
-### 🧩 Framework Support
+### Framework Support
 
 When creating components:
 
@@ -151,7 +151,7 @@ registry/<framework>/
 └── <component-name>.README.md      # Docs stub
 ```
 
-#### 📝 Adding Your Credit
+#### Adding Your Credit
 
 When creating components, add your information to get credited:
 
@@ -175,10 +175,10 @@ Your name will appear:
 
 #### Why Add Credits?
 
-- 🌟 Get recognition for your work
-- 🔗 Drive traffic to your GitHub/social profiles
-- 📈 Build your open source portfolio
-- 🤝 Grow your network in the dev community
+- Get recognition for your work
+- Drive traffic to your GitHub/social profiles
+- Build your open source portfolio
+- Grow your network in the dev community
 
 ### 2. Implement the animation
 
@@ -237,13 +237,47 @@ Verify the component:
 
 ---
 
+## Branching Policy
+
+### Branch Naming Conventions
+
+To keep the development process organized and make it easy for maintainers to understand the scope of a pull request at a glance, we follow a strict branch naming convention.
+
+**Format:** `category/short-description`
+
+Please use the following prefixes when creating a new branch:
+
+| Category | Prefix | Description | Example |
+| --- | --- | --- | --- |
+| **New UI Component** | `ui/` | For creating a brand new UI component. | `ui/navbar-main` |
+| **Update UI** | `ui-upd/` | Updating or enhancing an existing UI component. | `ui-upd/button-variants` |
+| **Bug Fix** | `fix/` | Fixing a bug or an issue. | `fix/header-overlap` |
+| **New Feature** | `feat/` | New functional logic (non-UI specific). | `feat/auth-integration` |
+| **Refactor** | `refactor/` | Code changes that neither fix a bug nor add a feature. | `refactor/api-calls` |
+| **Performance** | `perf/` | Changes aimed at improving performance. | `perf/image-loading` |
+| **Documentation** | `docs/` | Updates to the documentation or README. | `docs/setup-guide` |
+| **Maintenance** | `chore/` | Updating dependencies, build scripts, or config. | `chore/update-deps` |
+
+#### Guidelines
+
+1. **Lowercase only:** Use lowercase letters, numbers, and hyphens.
+2. **Kebab-case:** Use hyphens `-` to separate words in the description (e.g., `sidebar-menu`, not `sidebar_menu` or `sidebarMenu`).
+3. **Be Concise:** Keep the description short but descriptive.
+4. **Link Issues:** If the branch is related to a specific GitHub issue, it is helpful (but optional) to include the issue number: `fix/124-login-crash`.
+
+---
+
+### Questions?
+
+If you're unsure which branch type to use, feel free to ask in the issue or discussion thread before creating your branch.
+
 ## Testing Guidelines
 
 All contributions must include appropriate tests.
 
 ### Test Structure
 
-```
+```text
 tests/
 ├── unit/              # Unit tests for individual functions
 ├── e2e/               # End-to-end CLI tests
@@ -295,7 +329,7 @@ npm run build
 - Mock file system operations when testing in isolation
 - Mock `process.exit` to prevent test suite termination
 
-## 🔍 Mapping Video → Component (Registry / find Command)
+## Mapping Video → Component (Registry / find Command)
 
 The `find` command relies on registry metadata (like `index.json`).  
 If you maintain a mapping of video URLs to components, please:
@@ -319,7 +353,7 @@ to point to your new component and let users install it easily.
 
 ---
 
-## 🔧 Working on the CLI Itself
+## Working on the CLI Itself
 
 You can also contribute to commands:
 
@@ -338,7 +372,7 @@ Guidelines:
 
 ---
 
-## 🧪 Coding & Style Guidelines
+## Coding & Style Guidelines
 
 - Use TypeScript where possible
 - Keep functions small and focused
@@ -350,7 +384,7 @@ Guidelines:
 
 ---
 
-## 🧾 Commit & PR Process
+## Commit & PR Process
 
 1. **Create a branch**:
 
@@ -376,7 +410,7 @@ git commit -m "feat: add blur image toggle animation for nextjs"
 
 ---
 
-## ✅ PR Checklist
+## PR Checklist
 
 Before submitting:
 
@@ -390,7 +424,7 @@ Before submitting:
 
 ---
 
-## 💬 Questions / Ideas
+## Questions / Ideas
 
 If you have:
 
